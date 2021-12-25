@@ -7,11 +7,20 @@
 #include "compositor.h"
 #include "view.h"
 
+enum zms_surface_role {
+  SURFACE_ROLE_NONE = 0,
+  SURFACE_ROLE_XDG_SURFACE,
+  SURFACE_ROLE_XDG_TOPLEVEL,
+  SURFACE_ROLE_XDG_POPUP,
+};
+
 struct zms_surface {
   struct wl_resource *resource;
 
   struct zms_compositor *compositor;
   struct zms_view *view;
+
+  enum zms_surface_role role;
 };
 
 struct zms_surface *zms_surface_create(

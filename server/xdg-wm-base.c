@@ -3,6 +3,9 @@
 #include <xdg-shell-server-protocol.h>
 #include <zmonitors.h>
 
+#include "surface.h"
+#include "xdg-surface.h"
+
 static void
 zms_wm_base_protocol_destroy(
     struct wl_client *client, struct wl_resource *resource)
@@ -26,11 +29,12 @@ zms_wm_base_protocol_get_xdg_surface(struct wl_client *client,
     struct wl_resource *resource, uint32_t id,
     struct wl_resource *surface_resource)
 {
-  // TODO:
-  Z_UNUSED(client);
   Z_UNUSED(resource);
-  Z_UNUSED(id);
-  Z_UNUSED(surface_resource);
+  struct zms_surface *surface;
+
+  surface = wl_resource_get_user_data(surface_resource);
+
+  zms_xdg_surface_create(surface, client, id);
 }
 
 static void

@@ -121,6 +121,7 @@ zms_surface_create(
   surface->resource = resource;
   surface->compositor = compositor;
   surface->view = view;
+  surface->role = SURFACE_ROLE_NONE;
 
   return surface;
 
