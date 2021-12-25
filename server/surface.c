@@ -179,6 +179,7 @@ zms_surface_create(
   surface->compositor = compositor;
   surface->view = view;
   surface->role = SURFACE_ROLE_NONE;
+  wl_signal_init(&surface->destroy_signal);
 
   return surface;
 
@@ -195,6 +196,7 @@ err:
 static void
 zms_surface_destroy(struct zms_surface *surface)
 {
+  wl_signal_emit(&surface->destroy_signal, NULL);
   zms_view_destroy(surface->view);
   free(surface);
 }

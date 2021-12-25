@@ -1,12 +1,16 @@
 #ifndef ZMONITORS_SERVER_XDG_SURFACE_H
 #define ZMONITORS_SERVER_XDG_SURFACE_H
 
+#include <wayland-server.h>
 #include <zmonitors.h>
 
 #include "surface.h"
 
 struct zms_xdg_surface {
+  struct wl_resource *resource;
+
   struct zms_surface *surface;
+  struct wl_listener surface_destroy_listener;
 };
 
 struct zms_xdg_surface *zms_xdg_surface_create(

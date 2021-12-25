@@ -21,6 +21,9 @@ struct zms_surface {
   struct zms_view *view;
 
   enum zms_surface_role role;
+
+  /* signal */
+  struct wl_signal destroy_signal;
 };
 
 struct zms_surface *zms_surface_create(

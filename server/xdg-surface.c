@@ -83,6 +83,19 @@ static const struct xdg_surface_interface zms_xdg_surface_interface = {
     .ack_configure = zms_xdg_surface_protocol_ack_configure,
 };
 
+static void
+surface_destroy_signal_handler(struct wl_listener *listener, void *data)
+{
+  Z_UNUSED(data);
+
+  struct zms_xdg_surface *xdg_surface;
+
+  xdg_surface =
+      wl_container_of(listener, xdg_surface, surface_destroy_listener);
+
+  wl_resource_destroy(xdg_surface->resource);
+}
+
 ZMS_EXPORT struct zms_xdg_surface *
 zms_xdg_surface_create(
     struct wl_client *client, uint32_t id, struct zms_surface *surface)
@@ -106,7 +119,11 @@ zms_xdg_surface_create(
       xdg_surface, zms_xdg_surface_handle_destroy);
 
   surface->role = SURFACE_ROLE_XDG_SURFACE;
+  xdg_surface->resource = resource;
   xdg_surface->surface = surface;
+  xdg_surface->surface_destroy_listener.notify = surface_destroy_signal_handler;
+  wl_signal_add(
+      &surface->destroy_signal, &xdg_surface->surface_destroy_listener);
 
   return xdg_surface;
 
@@ -120,5 +137,6 @@ err:
 static void
 zms_xdg_surface_destroy(struct zms_xdg_surface *xdg_surface)
 {
+  wl_list_remove(&xdg_surface->surface_destroy_listener.link);
   free(xdg_surface);
 }
