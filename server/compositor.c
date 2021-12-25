@@ -18,7 +18,7 @@ zms_compositor_protocol_create_surface(
 
   compositor = wl_resource_get_user_data(resource);
 
-  zms_surface_create(compositor, client, id);
+  zms_surface_create(client, id, compositor);
 }
 
 static void

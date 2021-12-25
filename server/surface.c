@@ -91,7 +91,7 @@ static const struct wl_surface_interface surface_interface = {
 
 ZMS_EXPORT struct zms_surface *
 zms_surface_create(
-    struct zms_compositor *compositor, struct wl_client *client, uint32_t id)
+    struct wl_client *client, uint32_t id, struct zms_compositor *compositor)
 {
   struct zms_surface *surface;
   struct wl_resource *resource;

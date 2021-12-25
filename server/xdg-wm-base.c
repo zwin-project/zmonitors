@@ -34,7 +34,7 @@ zms_wm_base_protocol_get_xdg_surface(struct wl_client *client,
 
   surface = wl_resource_get_user_data(surface_resource);
 
-  zms_xdg_surface_create(surface, client, id);
+  zms_xdg_surface_create(client, id, surface);
 }
 
 static void

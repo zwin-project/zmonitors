@@ -85,7 +85,7 @@ static const struct xdg_surface_interface zms_xdg_surface_interface = {
 
 ZMS_EXPORT struct zms_xdg_surface *
 zms_xdg_surface_create(
-    struct zms_surface *surface, struct wl_client *client, uint32_t id)
+    struct wl_client *client, uint32_t id, struct zms_surface *surface)
 {
   struct zms_xdg_surface *xdg_surface;
   struct wl_resource *resource;

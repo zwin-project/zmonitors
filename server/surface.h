@@ -24,6 +24,6 @@ struct zms_surface {
 };
 
 struct zms_surface *zms_surface_create(
-    struct zms_compositor *compositor, struct wl_client *client, uint32_t id);
+    struct wl_client *client, uint32_t id, struct zms_compositor *compositor);
 
 #endif  //  ZMONITORS_SERVER_SURFACE_H
