@@ -5,6 +5,7 @@ deps_zmonitors_server = [
 
 srcs_zmonitors_server = [
   'compositor.c',
+  'output.c',
   'seat.c',
   'xdg_wm_base.c',
   xdg_shell_protocol_c,

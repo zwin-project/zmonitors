@@ -4,6 +4,7 @@
 #include <wayland-server.h>
 #include <zmonitors.h>
 
+#include "output.h"
 #include "seat.h"
 #include "xdg_wm_base.h"
 
@@ -58,6 +59,7 @@ zms_compositor_create()
   struct wl_global* global;
   struct zms_wm_base* wm_base;
   struct zms_seat* seat;
+  struct zms_output* output;
   const char* socket;
 
   display = wl_display_create();
@@ -97,6 +99,11 @@ zms_compositor_create()
 
   /* create global objects */
 
+  if (wl_display_init_shm(display) == -1) {
+    zms_log("failed to initialize shm\n");
+    goto err_global;
+  }
+
   wm_base = zms_wm_base_create(compositor);
   if (wm_base == NULL) {
     zms_log("failed to create a wm_base\n");
@@ -109,10 +116,20 @@ zms_compositor_create()
     goto err_seat;
   }
 
+  output = zms_output_create(compositor);
+  if (output == NULL) {
+    zms_log("failed to create a output\n");
+    goto err_output;
+  }
+
   compositor->priv->wm_base = wm_base;
   compositor->seat = seat;
+  compositor->output = output;
 
   return compositor;
+
+err_output:
+  zms_seat_destroy(seat);
 
 err_seat:
   zms_wm_base_destroy(wm_base);
@@ -133,6 +150,7 @@ err_display:
 ZMS_EXPORT void
 zms_compositor_destroy(struct zms_compositor* compositor)
 {
+  zms_output_destroy(compositor->output);
   zms_seat_destroy(compositor->seat);
   zms_wm_base_destroy(compositor->priv->wm_base);
   wl_display_destroy(compositor->priv->display);
