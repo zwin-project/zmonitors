@@ -1,0 +1,26 @@
+== zmonitors
+
+Multi 2D monitors environment in link:https://github.com/zigen-project/zigen[zigen].
+
+== Build & Install
+
+[source, shell]
+----
+$ git clone https://github.com/zigen-project/zmonitors.git
+$ cd zmonitors
+$ meson build
+$ ninja -C build install
+----
+
+== Run
+
+Launch zigen compositor first.
+Please see link:https://github.com/zigen-project/zen[zen].
+
+----
+$ XDG_RUNTIME_DIR=/tmp/.xdg zmonitors
+----
+
+== Contributing
+
+See link:./docs/CONTRIBUTING.adoc[contributing doc].
