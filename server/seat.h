@@ -9,6 +9,9 @@
 struct zms_seat_private {
   struct wl_global *global;
   struct zms_compositor *compositor;
+
+  const char *name;
+  struct wl_list resource_list;
 };
 
 struct zms_seat *zms_seat_create(struct zms_compositor *compositor);

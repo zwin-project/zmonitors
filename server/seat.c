@@ -50,6 +50,28 @@ static const struct wl_seat_interface seat_interface = {
 };
 
 static void
+zms_seat_send_capabilities(struct zms_seat* seat, struct wl_client* client)
+{
+  struct wl_resource* resource;
+  uint32_t capabilities = 0;
+
+  // TODO: check caps
+  capabilities |= WL_SEAT_CAPABILITY_POINTER;
+
+  wl_resource_for_each(resource, &seat->priv->resource_list)
+  {
+    if (wl_resource_get_client(resource) == client)
+      wl_seat_send_capabilities(resource, capabilities);
+  }
+}
+
+static void
+zms_seat_handle_destroy(struct wl_resource* resource)
+{
+  wl_list_remove(wl_resource_get_link(resource));
+}
+
+static void
 zms_seat_bind(
     struct wl_client* client, void* data, uint32_t version, uint32_t id)
 {
@@ -62,7 +84,13 @@ zms_seat_bind(
     return;
   }
 
-  wl_resource_set_implementation(resource, &seat_interface, seat, NULL);
+  wl_resource_set_implementation(
+      resource, &seat_interface, seat, zms_seat_handle_destroy);
+
+  wl_list_insert(&seat->priv->resource_list, wl_resource_get_link(resource));
+
+  zms_seat_send_capabilities(seat, client);
+  wl_seat_send_name(resource, seat->priv->name);
 }
 
 ZMS_EXPORT struct zms_seat*
@@ -91,8 +119,10 @@ zms_seat_create(struct zms_compositor* compositor)
     goto err_global;
   }
 
-  priv->compositor = compositor;
   priv->global = global;
+  priv->compositor = compositor;
+  priv->name = "default";
+  wl_list_init(&priv->resource_list);
 
   seat->priv = priv;
 
@@ -111,6 +141,15 @@ err:
 ZMS_EXPORT void
 zms_seat_destroy(struct zms_seat* seat)
 {
+  struct wl_resource *resource, *tmp;
+
+  wl_resource_for_each_safe(resource, tmp, &seat->priv->resource_list)
+  {
+    wl_resource_set_destructor(resource, NULL);
+    wl_resource_set_user_data(resource, NULL);
+    wl_list_remove(wl_resource_get_link(resource));
+  }
+
   wl_global_destroy(seat->priv->global);
   free(seat->priv);
   free(seat);
