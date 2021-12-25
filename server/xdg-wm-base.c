@@ -1,4 +1,4 @@
-#include "xdg_wm_base.h"
+#include "xdg-wm-base.h"
 
 #include <xdg-shell-server-protocol.h>
 #include <zmonitors.h>

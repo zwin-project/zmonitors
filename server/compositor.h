@@ -3,7 +3,7 @@
 
 #include <wayland-server.h>
 
-#include "xdg_wm_base.h"
+#include "xdg-wm-base.h"
 
 struct zms_compositor_private {
   struct wl_display *display;

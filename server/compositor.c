@@ -8,7 +8,7 @@
 #include "seat.h"
 #include "surface.h"
 #include "view.h"
-#include "xdg_wm_base.h"
+#include "xdg-wm-base.h"
 
 static void
 zms_compositor_protocol_create_surface(
