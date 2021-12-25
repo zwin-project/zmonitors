@@ -24,57 +24,114 @@ zms_surface_protocol_destroy(
   wl_resource_destroy(resource);
 }
 
-// TODO:
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 static void
 zms_surface_protocol_attach(struct wl_client *client,
     struct wl_resource *resource, struct wl_resource *buffer, int32_t x,
     int32_t y)
-{}
+{
+  // TODO:
+  zms_log("request not implemented yet: wl_surface.attach\n");
+  Z_UNUSED(client);
+  Z_UNUSED(resource);
+  Z_UNUSED(buffer);
+  Z_UNUSED(x);
+  Z_UNUSED(y);
+}
 
 static void
 zms_surface_protocol_damage(struct wl_client *client,
     struct wl_resource *resource, int32_t x, int32_t y, int32_t width,
     int32_t height)
-{}
+{
+  // TODO:
+  zms_log("request not implemented yet: wl_surface.damage\n");
+  Z_UNUSED(client);
+  Z_UNUSED(resource);
+  Z_UNUSED(x);
+  Z_UNUSED(y);
+  Z_UNUSED(width);
+  Z_UNUSED(height);
+}
 
 static void
 zms_surface_protocol_frame(
     struct wl_client *client, struct wl_resource *resource, uint32_t callback)
-{}
+{
+  // TODO:
+  zms_log("request not implemented yet: wl_surface.frame\n");
+  Z_UNUSED(client);
+  Z_UNUSED(resource);
+  Z_UNUSED(callback);
+}
 
 static void
 zms_surface_protocol_set_opaque_region(struct wl_client *client,
     struct wl_resource *resource, struct wl_resource *region)
-{}
+{
+  // TODO:
+  zms_log("request not implemented yet: wl_surface.set_opaque_region\n");
+  Z_UNUSED(client);
+  Z_UNUSED(resource);
+  Z_UNUSED(region);
+}
 
 static void
 zms_surface_protocol_set_input_region(struct wl_client *client,
     struct wl_resource *resource, struct wl_resource *region)
-{}
+{
+  // TODO:
+  zms_log("request not implemented yet: wl_surface.set_input_region\n");
+  Z_UNUSED(client);
+  Z_UNUSED(resource);
+  Z_UNUSED(region);
+}
 
 static void
 zms_surface_protocol_commit(
     struct wl_client *client, struct wl_resource *resource)
-{}
+{
+  // TODO:
+  zms_log("request not implemented yet: wl_surface.commit\n");
+  Z_UNUSED(client);
+  Z_UNUSED(resource);
+}
 
 static void
 zms_surface_protocol_set_buffer_transform(
     struct wl_client *client, struct wl_resource *resource, int32_t transform)
-{}
+{
+  // TODO:
+  zms_log("request not implemented yet: wl_surface.transform\n");
+  Z_UNUSED(client);
+  Z_UNUSED(resource);
+  Z_UNUSED(transform);
+}
 
 static void
 zms_surface_protocol_set_buffer_scale(
     struct wl_client *client, struct wl_resource *resource, int32_t scale)
-{}
+{
+  // TODO:
+  zms_log("request not implemented yet: wl_surface.set_buffer_scale\n");
+  Z_UNUSED(client);
+  Z_UNUSED(resource);
+  Z_UNUSED(scale);
+}
 
 static void
 zms_surface_protocol_damage_buffer(struct wl_client *client,
     struct wl_resource *resource, int32_t x, int32_t y, int32_t width,
     int32_t height)
-{}
-#pragma GCC diagnostic pop
+{
+  // TODO:
+  zms_log("request not implemented yet: wl_surface.damage_buffer\n");
+  Z_UNUSED(client);
+  Z_UNUSED(resource);
+  Z_UNUSED(x);
+  Z_UNUSED(y);
+  Z_UNUSED(width);
+  Z_UNUSED(height);
+}
 
 static const struct wl_surface_interface surface_interface = {
     .destroy = zms_surface_protocol_destroy,

@@ -26,6 +26,7 @@ zms_compositor_protocol_create_region(
     struct wl_client* client, struct wl_resource* resource, uint32_t id)
 {
   // TODO:
+  zms_log("request not implemented yet: wl_compositor.create_region\n");
   Z_UNUSED(client);
   Z_UNUSED(resource);
   Z_UNUSED(id);

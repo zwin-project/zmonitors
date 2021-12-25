@@ -9,6 +9,7 @@ zms_seat_protocol_get_pointer(
     struct wl_client* client, struct wl_resource* resource, uint32_t id)
 {
   // TODO:
+  zms_log("request not implemented yet: wl_seat.get_pointer\n");
   Z_UNUSED(client);
   Z_UNUSED(resource);
   Z_UNUSED(id);
@@ -19,6 +20,7 @@ zms_seat_protocol_get_keyboard(
     struct wl_client* client, struct wl_resource* resource, uint32_t id)
 {
   // TODO:
+  zms_log("request not implemented yet: wl_seat.get_keyboard\n");
   Z_UNUSED(client);
   Z_UNUSED(resource);
   Z_UNUSED(id);
@@ -29,6 +31,7 @@ zms_seat_protocol_get_touch(
     struct wl_client* client, struct wl_resource* resource, uint32_t id)
 {
   // TODO:
+  zms_log("request not implemented yet: wl_seat.get_touch\n");
   Z_UNUSED(client);
   Z_UNUSED(resource);
   Z_UNUSED(id);
