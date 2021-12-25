@@ -6,16 +6,18 @@
 
 #include "output.h"
 #include "seat.h"
+#include "surface.h"
 #include "xdg_wm_base.h"
 
 static void
 zms_compositor_protocol_create_surface(
     struct wl_client* client, struct wl_resource* resource, uint32_t id)
 {
-  // TODO:
-  Z_UNUSED(client);
-  Z_UNUSED(resource);
-  Z_UNUSED(id);
+  struct zms_compositor* compositor;
+
+  compositor = wl_resource_get_user_data(resource);
+
+  zms_surface_create(compositor, client, id);
 }
 
 static void

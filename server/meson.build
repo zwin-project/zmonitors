@@ -7,6 +7,7 @@ srcs_zmonitors_server = [
   'compositor.c',
   'output.c',
   'seat.c',
+  'surface.c',
   'xdg_wm_base.c',
   xdg_shell_protocol_c,
   xdg_shell_server_protocol_h,
