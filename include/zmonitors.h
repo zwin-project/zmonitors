@@ -23,12 +23,23 @@ struct zms_output {
   struct zms_output_private *priv;
 };
 
+/* view */
+
+struct zms_view_private;
+
+struct zms_view {
+  struct zms_view_private *priv;
+  struct zms_list link;  // -> zms_compositor.view_list
+};
+
 /* compositor */
 
 struct zms_compositor_private;
 
 struct zms_compositor {
   struct zms_compositor_private *priv;
+
+  struct zms_list view_list;
 
   struct zms_seat *seat;
   struct zms_output *output;

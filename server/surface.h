@@ -5,11 +5,13 @@
 #include <zmonitors.h>
 
 #include "compositor.h"
+#include "view.h"
 
 struct zms_surface {
   struct wl_resource *resource;
 
   struct zms_compositor *compositor;
+  struct zms_view *view;
 };
 
 struct zms_surface *zms_surface_create(

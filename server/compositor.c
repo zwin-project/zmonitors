@@ -7,6 +7,7 @@
 #include "output.h"
 #include "seat.h"
 #include "surface.h"
+#include "view.h"
 #include "xdg_wm_base.h"
 
 static void
@@ -125,6 +126,7 @@ zms_compositor_create()
   }
 
   compositor->priv->wm_base = wm_base;
+  zms_list_init(&compositor->view_list);
   compositor->seat = seat;
   compositor->output = output;
 
@@ -152,6 +154,7 @@ err_display:
 ZMS_EXPORT void
 zms_compositor_destroy(struct zms_compositor* compositor)
 {
+  zms_list_remove(&compositor->view_list);
   zms_output_destroy(compositor->output);
   zms_seat_destroy(compositor->seat);
   zms_wm_base_destroy(compositor->priv->wm_base);

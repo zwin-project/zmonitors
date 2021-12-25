@@ -2,6 +2,8 @@
 
 #include <zmonitors.h>
 
+#include "view.h"
+
 static void zms_surface_destroy(struct zms_surface *surface);
 
 static void
@@ -93,11 +95,18 @@ zms_surface_create(
 {
   struct zms_surface *surface;
   struct wl_resource *resource;
+  struct zms_view *view;
 
   surface = zalloc(sizeof *surface);
   if (surface == NULL) {
     wl_client_post_no_memory(client);
     goto err;
+  }
+
+  view = zms_view_create(compositor);
+  if (view == NULL) {
+    wl_client_post_no_memory(client);
+    goto err_view;
   }
 
   resource = wl_resource_create(client, &wl_surface_interface, 5, id);
@@ -111,8 +120,14 @@ zms_surface_create(
 
   surface->resource = resource;
   surface->compositor = compositor;
+  surface->view = view;
+
+  return surface;
 
 err_resource:
+  zms_view_destroy(view);
+
+err_view:
   free(surface);
 
 err:
@@ -122,5 +137,6 @@ err:
 static void
 zms_surface_destroy(struct zms_surface *surface)
 {
+  zms_view_destroy(surface->view);
   free(surface);
 }
