@@ -9,8 +9,11 @@
 struct zms_xdg_surface {
   struct wl_resource *resource;
 
-  struct zms_surface *surface;
+  struct zms_surface *surface; /* nonnull */
   struct wl_listener surface_destroy_listener;
+
+  /* signals */
+  struct wl_signal destroy_signal;
 };
 
 struct zms_xdg_surface *zms_xdg_surface_create(

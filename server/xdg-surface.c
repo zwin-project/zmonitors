@@ -3,6 +3,8 @@
 #include <xdg-shell-server-protocol.h>
 #include <zmonitors.h>
 
+#include "xdg-toplevel.h"
+
 static void zms_xdg_surface_destroy(struct zms_xdg_surface *xdg_surface);
 
 static void
@@ -28,11 +30,11 @@ static void
 zms_xdg_surface_protocol_get_toplevel(
     struct wl_client *client, struct wl_resource *resource, uint32_t id)
 {
-  // TODO:
-  zms_log("request not implemented yet: xdg_surface.get_toplevel\n");
-  Z_UNUSED(client);
-  Z_UNUSED(resource);
-  Z_UNUSED(id);
+  struct zms_xdg_surface *xdg_surface;
+
+  xdg_surface = wl_resource_get_user_data(resource);
+
+  zms_xdg_toplevel_create(client, id, xdg_surface);
 }
 
 static void
@@ -124,6 +126,7 @@ zms_xdg_surface_create(
   xdg_surface->surface_destroy_listener.notify = surface_destroy_signal_handler;
   wl_signal_add(
       &surface->destroy_signal, &xdg_surface->surface_destroy_listener);
+  wl_signal_init(&xdg_surface->destroy_signal);
 
   return xdg_surface;
 
@@ -137,6 +140,7 @@ err:
 static void
 zms_xdg_surface_destroy(struct zms_xdg_surface *xdg_surface)
 {
+  wl_signal_emit(&xdg_surface->destroy_signal, NULL);
   wl_list_remove(&xdg_surface->surface_destroy_listener.link);
   free(xdg_surface);
 }
