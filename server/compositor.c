@@ -4,6 +4,7 @@
 #include <wayland-server.h>
 #include <zmonitors.h>
 
+#include "seat.h"
 #include "xdg_wm_base.h"
 
 static void
@@ -56,6 +57,7 @@ zms_compositor_create()
   struct wl_display* display;
   struct wl_global* global;
   struct zms_wm_base* wm_base;
+  struct zms_seat* seat;
   const char* socket;
 
   display = wl_display_create();
@@ -101,9 +103,19 @@ zms_compositor_create()
     goto err_global;
   }
 
+  seat = zms_seat_create(compositor);
+  if (seat == NULL) {
+    zms_log("failed to create a seat\n");
+    goto err_seat;
+  }
+
   compositor->priv->wm_base = wm_base;
+  compositor->seat = seat;
 
   return compositor;
+
+err_seat:
+  zms_wm_base_destroy(wm_base);
 
 err_global:
   free(priv);
@@ -121,6 +133,7 @@ err_display:
 ZMS_EXPORT void
 zms_compositor_destroy(struct zms_compositor* compositor)
 {
+  zms_seat_destroy(compositor->seat);
   zms_wm_base_destroy(compositor->priv->wm_base);
   wl_display_destroy(compositor->priv->display);
   free(compositor->priv);

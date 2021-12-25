@@ -7,12 +7,22 @@ extern "C" {
 
 #include <zmonitors-util.h>
 
+/* seat */
+
+struct zms_seat_private;
+
+struct zms_seat {
+  struct zms_seat_private *priv;
+};
+
 /* compositor */
 
 struct zms_compositor_private;
 
 struct zms_compositor {
   struct zms_compositor_private *priv;
+
+  struct zms_seat *seat;
 };
 
 struct zms_compositor *zms_compositor_create();
