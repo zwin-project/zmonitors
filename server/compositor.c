@@ -1,7 +1,10 @@
 #include "compositor.h"
 
+#include <stdbool.h>
 #include <wayland-server.h>
 #include <zmonitors.h>
+
+#include "xdg_wm_base.h"
 
 static void
 zms_compositor_protocol_create_surface(
@@ -32,11 +35,10 @@ static void
 zms_compositor_bind(
     struct wl_client* client, void* data, uint32_t version, uint32_t id)
 {
-  Z_UNUSED(version);
   struct zms_compositor* compositor = data;
   struct wl_resource* resource;
 
-  resource = wl_resource_create(client, &wl_compositor_interface, 4, id);
+  resource = wl_resource_create(client, &wl_compositor_interface, version, id);
   if (resource == NULL) {
     wl_client_post_no_memory(client);
     return;
@@ -53,6 +55,7 @@ zms_compositor_create()
   struct zms_compositor_private* priv;
   struct wl_display* display;
   struct wl_global* global;
+  struct zms_wm_base* wm_base;
   const char* socket;
 
   display = wl_display_create();
@@ -63,13 +66,13 @@ zms_compositor_create()
 
   compositor = zalloc(sizeof *compositor);
   if (compositor == NULL) {
-    zms_log("failed to create a compositor\n");
+    zms_log("failed to allocate memory\n");
     goto err_compositor;
   }
 
   priv = zalloc(sizeof *priv);
   if (priv == NULL) {
-    zms_log("failed to create a compositor priv\n");
+    zms_log("failed to allocate memory\n");
     goto err_priv;
   }
 
@@ -82,18 +85,26 @@ zms_compositor_create()
 
   socket = wl_display_add_socket_auto(display);
   if (socket == NULL) {
-    zms_log("failed to create a socket\n");
-    goto err_socket;
+    zms_log("failed to create a display socket\n");
+    goto err_global;
   }
 
   priv->display = display;
-  priv->global = global;
 
   compositor->priv = priv;
 
+  /* create global objects */
+
+  wm_base = zms_wm_base_create(compositor);
+  if (wm_base == NULL) {
+    zms_log("failed to create a wm_base\n");
+    goto err_global;
+  }
+
+  compositor->priv->wm_base = wm_base;
+
   return compositor;
 
-err_socket:
 err_global:
   free(priv);
 
@@ -107,21 +118,22 @@ err_display:
   return NULL;
 }
 
-WL_EXPORT void
+ZMS_EXPORT void
 zms_compositor_destroy(struct zms_compositor* compositor)
 {
+  zms_wm_base_destroy(compositor->priv->wm_base);
   wl_display_destroy(compositor->priv->display);
   free(compositor->priv);
   free(compositor);
 }
 
-WL_EXPORT void
+ZMS_EXPORT void
 zms_compositor_flush_clients(struct zms_compositor* compositor)
 {
   wl_display_flush_clients(compositor->priv->display);
 }
 
-WL_EXPORT void
+ZMS_EXPORT void
 zms_compositor_dispatch_event(struct zms_compositor* compositor, int timeout)
 {
   wl_event_loop_dispatch(

@@ -3,9 +3,13 @@
 
 #include <wayland-server.h>
 
+#include "xdg_wm_base.h"
+
 struct zms_compositor_private {
   struct wl_display *display;
-  struct wl_global *global;
+
+  /* global objects */
+  struct zms_wm_base *wm_base;
 };
 
 #endif  //  ZMONITORS_SERVER_COMPOSITOR_H

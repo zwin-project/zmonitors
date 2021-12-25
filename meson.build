@@ -15,10 +15,12 @@ public_inc = include_directories('include')
 # dependencies
 dep_wayland_server = dependency('wayland-server')
 dep_wayland_client = dependency('wayland-client')
+dep_wayland_protocols = dependency('wayland-protocols')
 dep_wayland_scanner = dependency('wayland-scanner', version: '>= 1.14.91')
 dep_zgn_protocol = dependency('zigen-protocols')
 dep_cglm = dependency('cglm')
 
+subdir('protocols')
 subdir('util')
 subdir('server')
 subdir('zmonitors')
