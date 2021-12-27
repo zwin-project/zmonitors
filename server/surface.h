@@ -23,6 +23,7 @@ struct zms_surface {
   enum zms_surface_role role;
 
   /* signal */
+  struct wl_signal commit_signal;
   struct wl_signal destroy_signal;
 };
 

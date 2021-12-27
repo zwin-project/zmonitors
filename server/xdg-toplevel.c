@@ -191,6 +191,53 @@ static const struct xdg_toplevel_interface toplevel_interface = {
 };
 
 static void
+zms_xdg_toplevel_send_configure(struct zms_xdg_toplevel *toplevel)
+{
+  struct zms_xdg_toplevel_configuration *config;
+  struct wl_display *display =
+      toplevel->xdg_surface->surface->compositor->priv->display;
+  struct wl_array state;
+
+  config = zalloc(sizeof *config);
+  if (config == NULL) {
+    wl_client_post_no_memory(wl_resource_get_client(toplevel->resource));
+    return;
+  }
+
+  config->serial = wl_display_next_serial(display);
+  config->size = toplevel->pending.size;
+
+  wl_list_insert(&toplevel->config_list, &config->link);
+
+  wl_array_init(&state);
+  // TODO: set state
+
+  xdg_toplevel_send_configure(
+      toplevel->resource, config->size.width, config->size.height, &state);
+
+  wl_array_release(&state);
+
+  xdg_surface_send_configure(toplevel->xdg_surface->resource, config->serial);
+}
+
+static void
+surface_commit_signal_handler(struct wl_listener *listener, void *data)
+{
+  Z_UNUSED(data);
+
+  struct zms_xdg_toplevel *toplevel;
+
+  toplevel = wl_container_of(listener, toplevel, surface_commit_listener);
+
+  if (!toplevel->committed) {
+    toplevel->committed = true;
+    // TODO: check that the surface has no attached buffer
+    zms_xdg_toplevel_send_configure(toplevel);
+    return;
+  }
+}
+
+static void
 xdg_surface_destroy_signal_handler(struct wl_listener *listener, void *data)
 {
   Z_UNUSED(data);
@@ -226,10 +273,21 @@ zms_xdg_toplevel_create(
 
   toplevel->resource = resource;
   toplevel->xdg_surface = xdg_surface;
+
+  wl_list_init(&toplevel->config_list);
+
+  // toplevel->pending initalized by zalloc
+
+  toplevel->surface_commit_listener.notify = surface_commit_signal_handler;
+  wl_signal_add(
+      &xdg_surface->surface->commit_signal, &toplevel->surface_commit_listener);
+
   toplevel->xdg_surface_destroy_listener.notify =
       xdg_surface_destroy_signal_handler;
   wl_signal_add(
       &xdg_surface->destroy_signal, &toplevel->xdg_surface_destroy_listener);
+
+  toplevel->committed = false;
 
   return toplevel;
 
@@ -243,6 +301,15 @@ err:
 static void
 zms_xdg_toplevel_destroy(struct zms_xdg_toplevel *toplevel)
 {
+  struct zms_xdg_toplevel_configuration *config, *tmp;
+
+  wl_list_for_each_safe(config, tmp, &toplevel->config_list, link)
+  {
+    wl_list_remove(&config->link);
+    free(config);
+  }
+
+  wl_list_remove(&toplevel->surface_commit_listener.link);
   wl_list_remove(&toplevel->xdg_surface_destroy_listener.link);
   free(toplevel);
 }

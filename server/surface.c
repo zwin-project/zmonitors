@@ -90,10 +90,12 @@ static void
 zms_surface_protocol_commit(
     struct wl_client *client, struct wl_resource *resource)
 {
-  // TODO:
-  zms_log("request not implemented yet: wl_surface.commit\n");
   Z_UNUSED(client);
-  Z_UNUSED(resource);
+  struct zms_surface *surface;
+
+  surface = wl_resource_get_user_data(resource);
+
+  wl_signal_emit(&surface->commit_signal, NULL);
 }
 
 static void
@@ -179,6 +181,7 @@ zms_surface_create(
   surface->compositor = compositor;
   surface->view = view;
   surface->role = SURFACE_ROLE_NONE;
+  wl_signal_init(&surface->commit_signal);
   wl_signal_init(&surface->destroy_signal);
 
   return surface;
