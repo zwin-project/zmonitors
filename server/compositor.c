@@ -5,6 +5,7 @@
 #include <zmonitors.h>
 
 #include "output.h"
+#include "region.h"
 #include "seat.h"
 #include "surface.h"
 #include "view.h"
@@ -25,11 +26,9 @@ static void
 zms_compositor_protocol_create_region(
     struct wl_client* client, struct wl_resource* resource, uint32_t id)
 {
-  // TODO:
-  zms_log("request not implemented yet: wl_compositor.create_region\n");
-  Z_UNUSED(client);
   Z_UNUSED(resource);
-  Z_UNUSED(id);
+
+  zms_region_create(client, id);
 }
 
 static const struct wl_compositor_interface compositor_interface = {

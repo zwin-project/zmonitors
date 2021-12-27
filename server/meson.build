@@ -6,6 +6,7 @@ deps_zmonitors_server = [
 srcs_zmonitors_server = [
   'compositor.c',
   'output.c',
+  'region.c',
   'seat.c',
   'surface.c',
   'view.c',
