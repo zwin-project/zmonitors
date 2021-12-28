@@ -84,8 +84,8 @@ zms_wm_base_create(struct zms_compositor *comopsitor)
     goto err;
   }
 
-  global = wl_global_create(comopsitor->priv->display, &xdg_wm_base_interface,
-      3, wm_base, zms_wm_base_bind);
+  global = wl_global_create(comopsitor->display, &xdg_wm_base_interface, 3,
+      wm_base, zms_wm_base_bind);
   if (global == NULL) {
     zms_log("failed to create a wm_base wl_global\n");
     goto err_global;

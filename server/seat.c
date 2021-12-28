@@ -116,7 +116,7 @@ zms_seat_create(struct zms_compositor* compositor)
   }
 
   global = wl_global_create(
-      compositor->priv->display, &wl_seat_interface, 7, seat, zms_seat_bind);
+      compositor->display, &wl_seat_interface, 7, seat, zms_seat_bind);
   if (global == NULL) {
     zms_log("failed to create a seat wl_global\n");
     goto err_global;

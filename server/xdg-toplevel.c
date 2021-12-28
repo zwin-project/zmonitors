@@ -195,7 +195,7 @@ zms_xdg_toplevel_send_configure(struct zms_xdg_toplevel *toplevel)
 {
   struct zms_xdg_toplevel_configuration *config;
   struct wl_display *display =
-      toplevel->xdg_surface->surface->compositor->priv->display;
+      toplevel->xdg_surface->surface->compositor->display;
   struct wl_array state;
 
   config = zalloc(sizeof *config);

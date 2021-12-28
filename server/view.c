@@ -19,7 +19,7 @@ zms_view_create(struct zms_compositor* compositor)
   priv->pub = view;
 
   view->priv = priv;
-  zms_list_insert(&compositor->view_list, &view->link);
+  wl_list_insert(&compositor->view_list, &view->link);
 
   return view;
 
@@ -33,7 +33,7 @@ err:
 ZMS_EXPORT void
 zms_view_destroy(struct zms_view* view)
 {
-  zms_list_remove(&view->link);
+  wl_list_remove(&view->link);
   free(view->priv);
   free(view);
 }

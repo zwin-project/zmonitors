@@ -1,9 +1,9 @@
-#ifndef ZMONITORS_SERVER_TYPES_H
-#define ZMONITORS_SERVER_TYPES_H
+#ifndef ZMONITORS_TYPES_H
+#define ZMONITORS_TYPES_H
 
 #include <stdint.h>
 
-struct zms_size {
+struct zms_screen_size {
   int32_t width, height;
 };
 

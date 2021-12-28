@@ -1,7 +1,6 @@
 deps_zmonitors_util = []
 
 srcs_zmonitors_util = [
-  'list.c',
   'log.c',
 ]
 

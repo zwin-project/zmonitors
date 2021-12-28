@@ -2,15 +2,15 @@
 #define ZMONITORS_SERVER_XDG_TOPLEVEL_H
 
 #include <wayland-server.h>
+#include <zmonitors-types.h>
 
-#include "types.h"
 #include "xdg-surface.h"
 
 struct zms_xdg_toplevel_configuration {
   uint32_t serial;
   struct wl_list link;  // -> zms_xdg_toplevel.config_list
 
-  struct zms_size size;
+  struct zms_screen_size size;
 };
 
 struct zms_xdg_toplevel {
@@ -20,7 +20,7 @@ struct zms_xdg_toplevel {
   struct wl_list config_list;
 
   struct {
-    struct zms_size size;
+    struct zms_screen_size size;
   } pending;
 
   /* listeners */

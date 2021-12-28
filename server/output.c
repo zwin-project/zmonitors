@@ -89,8 +89,8 @@ zms_output_create(struct zms_compositor* compositor)
     goto err_priv;
   }
 
-  global = wl_global_create(compositor->priv->display, &wl_output_interface, 3,
-      output, zms_output_bind);
+  global = wl_global_create(
+      compositor->display, &wl_output_interface, 3, output, zms_output_bind);
   if (global == NULL) {
     zms_log("failed to create a output wl_global\n");
     goto err_global;

@@ -6,8 +6,6 @@
 #include "xdg-wm-base.h"
 
 struct zms_compositor_private {
-  struct wl_display *display;
-
   /* global objects */
   struct zms_wm_base *wm_base;
 };

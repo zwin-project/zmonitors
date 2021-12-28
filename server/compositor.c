@@ -96,9 +96,9 @@ zms_compositor_create()
     goto err_global;
   }
 
-  priv->display = display;
-
   compositor->priv = priv;
+  compositor->display = display;
+  wl_list_init(&compositor->view_list);
 
   /* create global objects */
 
@@ -126,7 +126,6 @@ zms_compositor_create()
   }
 
   compositor->priv->wm_base = wm_base;
-  zms_list_init(&compositor->view_list);
   compositor->seat = seat;
   compositor->output = output;
 
@@ -154,24 +153,11 @@ err_display:
 ZMS_EXPORT void
 zms_compositor_destroy(struct zms_compositor* compositor)
 {
-  zms_list_remove(&compositor->view_list);
+  wl_list_remove(&compositor->view_list);
   zms_output_destroy(compositor->output);
   zms_seat_destroy(compositor->seat);
   zms_wm_base_destroy(compositor->priv->wm_base);
-  wl_display_destroy(compositor->priv->display);
+  wl_display_destroy(compositor->display);
   free(compositor->priv);
   free(compositor);
-}
-
-ZMS_EXPORT void
-zms_compositor_flush_clients(struct zms_compositor* compositor)
-{
-  wl_display_flush_clients(compositor->priv->display);
-}
-
-ZMS_EXPORT void
-zms_compositor_dispatch_event(struct zms_compositor* compositor, int timeout)
-{
-  wl_event_loop_dispatch(
-      wl_display_get_event_loop(compositor->priv->display), timeout);
 }
