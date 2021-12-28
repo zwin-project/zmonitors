@@ -1,6 +1,6 @@
 #include "output.h"
 
-#include <zmonitors.h>
+#include <zmonitors-server.h>
 
 #include "compositor.h"
 

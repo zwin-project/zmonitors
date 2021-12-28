@@ -1,7 +1,7 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <zmonitors.h>
+#include <zmonitors-server.h>
 
 volatile sig_atomic_t run = false;
 

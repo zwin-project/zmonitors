@@ -1,7 +1,7 @@
 #include "xdg-wm-base.h"
 
 #include <xdg-shell-server-protocol.h>
-#include <zmonitors.h>
+#include <zmonitors-server.h>
 
 #include "surface.h"
 #include "xdg-surface.h"

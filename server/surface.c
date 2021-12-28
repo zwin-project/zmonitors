@@ -1,6 +1,6 @@
 #include "surface.h"
 
-#include <zmonitors.h>
+#include <zmonitors-server.h>
 
 #include "view.h"
 

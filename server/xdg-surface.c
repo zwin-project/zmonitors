@@ -1,7 +1,7 @@
 #include "xdg-surface.h"
 
 #include <xdg-shell-server-protocol.h>
-#include <zmonitors.h>
+#include <zmonitors-server.h>
 
 #include "xdg-toplevel.h"
 

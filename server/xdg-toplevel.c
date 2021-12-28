@@ -1,7 +1,7 @@
 #include "xdg-toplevel.h"
 
 #include <xdg-shell-server-protocol.h>
-#include <zmonitors.h>
+#include <zmonitors-server.h>
 
 static void zms_xdg_toplevel_destroy(struct zms_xdg_toplevel *toplevel);
 

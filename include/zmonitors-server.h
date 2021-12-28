@@ -1,5 +1,5 @@
-#ifndef ZMONITORS_H
-#define ZMONITORS_H
+#ifndef ZMONITORS_SERVER_H
+#define ZMONITORS_SERVER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,4 +58,4 @@ void zms_compositor_dispatch_event(
 }
 #endif
 
-#endif  //  ZMONITORS_H
+#endif  //  ZMONITORS_SERVER_H

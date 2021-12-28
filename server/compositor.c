@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 #include <wayland-server.h>
-#include <zmonitors.h>
+#include <zmonitors-server.h>
 
 #include "output.h"
 #include "region.h"

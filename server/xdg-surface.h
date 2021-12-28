@@ -2,7 +2,7 @@
 #define ZMONITORS_SERVER_XDG_SURFACE_H
 
 #include <wayland-server.h>
-#include <zmonitors.h>
+#include <zmonitors-server.h>
 
 #include "surface.h"
 

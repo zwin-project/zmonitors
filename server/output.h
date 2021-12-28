@@ -1,7 +1,7 @@
 #ifndef ZMONITORS_SERVER_OUTPUT_H
 #define ZMONITORS_SERVER_OUTPUT_H
 
-#include <zmonitors.h>
+#include <zmonitors-server.h>
 
 #include "compositor.h"
 

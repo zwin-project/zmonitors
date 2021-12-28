@@ -1,7 +1,7 @@
 #include "region.h"
 
 #include <wayland-server.h>
-#include <zmonitors.h>
+#include <zmonitors-server.h>
 
 static void zms_region_destroy(struct zms_region *region);
 
