@@ -5,6 +5,12 @@ deps_zmonitors_backend = [
 
 srcs_zmonitors_backend = [
   'backend.c',
+  zigen_protocol_c,
+  zigen_client_protocol_h,
+  zigen_shell_protocol_c,
+  zigen_shell_client_protocol_h,
+  zigen_opengl_protocol_c,
+  zigen_opengl_client_protocol_h,
 ]
 
 lib_zmonitors_backend = static_library(

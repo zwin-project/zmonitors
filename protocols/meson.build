@@ -1,32 +1,33 @@
 scanner_path = dep_wayland_scanner.get_variable(pkgconfig: 'wayland_scanner')
 wayland_protocols_dir = dep_wayland_protocols.get_variable(pkgconfig: 'pkgdatadir')
-xdg_shell_xml = files(wayland_protocols_dir / 'stable/xdg-shell/xdg-shell.xml')
-xdg_output_xml = files(wayland_protocols_dir / 'unstable/xdg-output/xdg-output-unstable-v1.xml')
+zgn_protocol_dir = dep_zgn_protocol.get_variable(pkgconfig: 'pkgdatadir')
 
-xdg_shell_server_protocol_h = custom_target(
-  'xdg-shell-server-protocol',
-  output : 'xdg-shell-server-protocol.h',
-  input : xdg_shell_xml,
-  command : [scanner_path, 'server-header', '@INPUT@', '@OUTPUT@'],
-)
+generated_protocols = {
+  'xdg-shell': files(wayland_protocols_dir / 'stable/xdg-shell/xdg-shell.xml'),
+  'xdg-output': files(wayland_protocols_dir / 'unstable/xdg-output/xdg-output-unstable-v1.xml'),
+  'zigen': files(zgn_protocol_dir / 'zigen.xml'),
+  'zigen-shell': files(zgn_protocol_dir / 'zigen-shell.xml'),
+  'zigen-opengl': files(zgn_protocol_dir / 'zigen-opengl.xml'),
+}
 
-xdg_shell_protocol_c = custom_target(
-  'xdg-shell-protocol',
-  output : 'xdg-shell-protocol.c',
-  input : xdg_shell_xml,
-  command : [scanner_path, 'private-code', '@INPUT@', '@OUTPUT@'],
-)
+foreach name, path : generated_protocols
+  foreach output_type : [ 'server-header', 'client-header', 'private-code' ]
+    if output_type == 'client-header'
+      output_file = '@0@-client-protocol.h'.format(name)
+    elif output_type == 'server-header'
+      output_file = '@0@-server-protocol.h'.format(name)
+    else
+      output_file = '@0@-protocol.c'.format(name)
+    endif
 
-xdg_output_server_protocol_h = custom_target(
-  'xdg-output-server-protocol',
-  output : 'xdg-output-server-protocol.h',
-  input : xdg_output_xml,
-  command : [scanner_path, 'server-header', '@INPUT@', '@OUTPUT@'],
-)
+    var_name = output_file.underscorify()
+    target = custom_target(
+      '@0@ @1@'.format(name, output_type),
+      command: [ scanner_path, output_type, '@INPUT@', '@OUTPUT@'],
+      input: path,
+      output: output_file,
+    )
 
-xdg_output_protocol_c = custom_target(
-  'xdg-output-protocol',
-  output : 'xdg-output-protocol.c',
-  input : xdg_output_xml,
-  command : [scanner_path, 'private-code', '@INPUT@', '@OUTPUT@'],
-)
+    set_variable(var_name, target)
+  endforeach
+endforeach
