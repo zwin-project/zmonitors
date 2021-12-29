@@ -6,6 +6,7 @@
 
 struct zms_virtual_object {
   struct zgn_virtual_object *proxy;
+  struct zms_backend *backend;
 };
 
 struct zms_virtual_object *zms_virtual_object_create(

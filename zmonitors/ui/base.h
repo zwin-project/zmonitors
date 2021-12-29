@@ -5,6 +5,7 @@
 
 struct zms_ui_base {
   struct zms_cuboid_window *cuboid_window;
+  struct zms_opengl_component *component;
 };
 
 struct zms_ui_base *zms_ui_base_create(struct zms_cuboid_window *cuboid_window);

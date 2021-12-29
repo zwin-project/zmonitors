@@ -78,6 +78,7 @@ zms_cuboid_window_create(
   priv->virtual_object = virtual_object;
   cuboid_window->priv = priv;
   cuboid_window->backend = backend;
+  cuboid_window->virtual_object = virtual_object;
 
   return cuboid_window;
 

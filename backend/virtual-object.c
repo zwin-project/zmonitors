@@ -19,6 +19,8 @@ zms_virtual_object_create(struct zms_backend *backend)
   virtual_object->proxy = proxy;
   wl_proxy_set_user_data((struct wl_proxy *)proxy, virtual_object);
 
+  virtual_object->backend = backend;
+
   return virtual_object;
 
 err_proxy:

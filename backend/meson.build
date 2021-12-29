@@ -7,6 +7,7 @@ deps_zmonitors_backend = [
 srcs_zmonitors_backend = [
   'backend.c',
   'cuboid-window.c',
+  'opengl-component.c',
   'virtual-object.c',
   zigen_protocol_c,
   zigen_client_protocol_h,
