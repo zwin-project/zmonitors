@@ -1,6 +1,7 @@
 scanner_path = dep_wayland_scanner.get_variable(pkgconfig: 'wayland_scanner')
 wayland_protocols_dir = dep_wayland_protocols.get_variable(pkgconfig: 'pkgdatadir')
 zgn_protocol_dir = dep_zgn_protocol.get_variable(pkgconfig: 'pkgdatadir')
+wayland_scanner = find_program(scanner_path)
 
 generated_protocols = {
   'xdg-shell': files(wayland_protocols_dir / 'stable/xdg-shell/xdg-shell.xml'),
@@ -23,7 +24,7 @@ foreach name, path : generated_protocols
     var_name = output_file.underscorify()
     target = custom_target(
       '@0@ @1@'.format(name, output_type),
-      command: [ scanner_path, output_type, '@INPUT@', '@OUTPUT@'],
+      command: [ wayland_scanner, output_type, '@INPUT@', '@OUTPUT@'],
       input: path,
       output: output_file,
     )

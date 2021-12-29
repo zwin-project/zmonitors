@@ -1,3 +1,5 @@
+#include "backend.h"
+
 #include <string.h>
 #include <wayland-client.h>
 #include <zigen-client-protocol.h>
@@ -6,17 +8,6 @@
 #include <zmonitors-util.h>
 
 #include "zmonitors-backend.h"
-
-struct zms_backend {
-  struct wl_display* display;
-
-  /* globals */
-  struct zgn_compositor* compositor;
-  struct zgn_seat* seat;
-  struct zgn_shell* shell;
-  struct wl_shm* shm;
-  struct zgn_opengl* opengl;
-};
 
 static void
 seat_capabilities(void* data, struct zgn_seat* seat, uint32_t capability)

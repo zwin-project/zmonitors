@@ -1,10 +1,13 @@
 deps_zmonitors_backend = [
+  dep_cglm,
   dep_wayland_client,
   dep_zmonitors_util,
 ]
 
 srcs_zmonitors_backend = [
   'backend.c',
+  'cuboid-window.c',
+  'virtual-object.c',
   zigen_protocol_c,
   zigen_client_protocol_h,
   zigen_shell_protocol_c,

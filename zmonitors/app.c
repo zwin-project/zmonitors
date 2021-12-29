@@ -11,7 +11,7 @@ handle_backend_event(int fd, uint32_t mask, void* data)
   struct zms_app* app = data;
   int count = 0;
 
-  if ((mask & WL_EVENT_HANGUP) || (mask && WL_EVENT_ERROR)) {
+  if ((mask & WL_EVENT_HANGUP) || (mask & WL_EVENT_ERROR)) {
     wl_display_terminate(app->compositor->display);
     return 0;
   }
@@ -71,21 +71,21 @@ zms_app_create()
     goto err_backend;
   }
 
-  primary_monitor = zms_monitor_create(screen_size);
-  if (primary_monitor == NULL) {
-    zms_log("failed to create a primary monitor\n");
-    goto err_monitor;
-  }
-
   if (zms_backend_connect(backend, "zigen-0") == false) {
     zms_log("failed to connect zigen server\n");
     goto err_connect;
   }
 
+  primary_monitor = zms_monitor_create(backend, compositor, screen_size);
+  if (primary_monitor == NULL) {
+    zms_log("failed to create a primary monitor\n");
+    goto err_monitor;
+  }
+
   loop = wl_display_get_event_loop(compositor->display);
   backend_fd = zms_backend_get_fd(backend);
-  backend_event_source = wl_event_loop_add_fd(
-      loop, backend_fd, WL_EVENT_READABLE, handle_backend_event, app);
+  backend_event_source = wl_event_loop_add_fd(loop, backend_fd,
+      WL_EVENT_READABLE | WL_EVENT_WRITABLE, handle_backend_event, app);
 
   if (backend_event_source == NULL) {
     zms_log("failed to create a event source\n");
@@ -110,10 +110,10 @@ zms_app_create()
 
 err_signal:
 err_event_source:
-err_connect:
   zms_monitor_destroy(primary_monitor);
 
 err_monitor:
+err_connect:
   zms_backend_destroy(backend);
 
 err_backend:
