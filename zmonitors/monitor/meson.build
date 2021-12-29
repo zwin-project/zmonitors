@@ -1,6 +1,7 @@
 deps_zms_monitor = [
   dep_cglm,
   dep_zmonitors_server,
+  dep_zms_ui,
 ]
 
 srcs_zms_monitor = [
@@ -15,7 +16,7 @@ lib_zms_monitor = static_library(
   include_directories: [
     zmonitors_private_inc,
     public_inc,
-  ]
+  ],
 )
 
 dep_zms_monitor = declare_dependency(

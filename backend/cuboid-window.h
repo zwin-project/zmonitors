@@ -5,7 +5,7 @@
 
 #include "virtual-object.h"
 
-struct zms_cuboid_window {
+struct zms_cuboid_window_private {
   struct zgn_cuboid_window *proxy;
   struct zms_virtual_object *virtual_object;
 };

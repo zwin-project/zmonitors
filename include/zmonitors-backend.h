@@ -21,7 +21,12 @@ int zms_backend_flush(struct zms_backend* backend);
 
 int zms_backend_dispatch_pending(struct zms_backend* backend);
 
-struct zms_cuboid_window;
+struct zms_cuboid_window_private;
+
+struct zms_cuboid_window {
+  struct zms_cuboid_window_private* priv;
+  struct zms_backend* backend;
+};
 
 struct zms_cuboid_window* zms_cuboid_window_create(
     struct zms_backend* backend, vec3 half_size, versor quaternion);

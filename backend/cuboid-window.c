@@ -42,11 +42,15 @@ zms_cuboid_window_create(
     struct zms_backend *backend, vec3 half_size, versor quaternion)
 {
   struct zms_cuboid_window *cuboid_window;
+  struct zms_cuboid_window_private *priv;
   struct zms_virtual_object *virtual_object;
   struct zgn_cuboid_window *proxy;
 
   cuboid_window = zalloc(sizeof *cuboid_window);
   if (cuboid_window == NULL) goto err;
+
+  priv = zalloc(sizeof *priv);
+  if (priv == NULL) goto err_priv;
 
   virtual_object = zms_virtual_object_create(backend);
   if (virtual_object == NULL) goto err_virtual_object;
@@ -69,9 +73,11 @@ zms_cuboid_window_create(
 
   zgn_cuboid_window_add_listener(proxy, &cuboid_window_listener, cuboid_window);
 
-  cuboid_window->proxy = proxy;
+  priv->proxy = proxy;
   wl_proxy_set_user_data((struct wl_proxy *)proxy, cuboid_window);
-  cuboid_window->virtual_object = virtual_object;
+  priv->virtual_object = virtual_object;
+  cuboid_window->priv = priv;
+  cuboid_window->backend = backend;
 
   return cuboid_window;
 
@@ -79,6 +85,9 @@ err_proxy:
   zms_virtual_object_destroy(virtual_object);
 
 err_virtual_object:
+  free(priv);
+
+err_priv:
   free(cuboid_window);
 
 err:
@@ -88,7 +97,8 @@ err:
 ZMS_EXPORT void
 zms_cuboid_window_destroy(struct zms_cuboid_window *cuboid_window)
 {
-  zms_virtual_object_destroy(cuboid_window->virtual_object);
-  zgn_cuboid_window_destroy(cuboid_window->proxy);
+  zms_virtual_object_destroy(cuboid_window->priv->virtual_object);
+  zgn_cuboid_window_destroy(cuboid_window->priv->proxy);
+  free(cuboid_window->priv);
   free(cuboid_window);
 }

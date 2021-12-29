@@ -1,5 +1,6 @@
 zmonitors_private_inc = include_directories('.')
 
+subdir('ui')
 subdir('monitor')
 
 deps_zmonitors = [
@@ -9,14 +10,14 @@ deps_zmonitors = [
   dep_zms_monitor,
 ]
 
-src_zmonitors = [
+srcs_zmonitors = [
   'app.c',
   'main.c',
 ]
 
 executable(
   'zmonitors',
-  src_zmonitors,
+  srcs_zmonitors,
   install: true,
   pie: true,
   dependencies: deps_zmonitors,
