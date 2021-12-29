@@ -4,7 +4,7 @@ deps_zms_ui = [
 
 srcs_zms_ui = [
   'base.c',
-  'paper.c',
+  'root.c',
 ]
 
 lib_zms_ui = static_library(

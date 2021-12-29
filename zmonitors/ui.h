@@ -3,11 +3,27 @@
 
 #include <zmonitors-backend.h>
 
-struct zms_ui_paper;
+/* ui base */
 
-struct zms_ui_paper* zms_ui_paper_create(
-    struct zms_cuboid_window* cuboid_window);
+struct zms_ui_base_interface {
+  void (*setup)();
+};
 
-void zms_ui_paper_destroy(struct zms_ui_paper* paper);
+struct zms_ui_base;
+
+struct zms_ui_base* zms_ui_base_create(struct zms_ui_base* parent);
+
+void zms_ui_base_destroy(struct zms_ui_base* ui_base);
+
+/* root */
+
+struct zms_ui_root;
+
+struct zms_ui_root* zms_ui_root_create(
+    struct zms_backend* backend, vec3 half_size, versor quaternion);
+
+void zms_ui_root_destroy(struct zms_ui_root* root);
+
+struct zms_ui_base* zms_ui_root_get_base(struct zms_ui_root* root);
 
 #endif  //  ZMONITORS_UI_H
