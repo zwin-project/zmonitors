@@ -35,9 +35,14 @@ struct zms_cuboid_window {
   struct zms_cuboid_window_private* priv;
   struct zms_backend* backend;
   struct zms_virtual_object* virtual_object;
+
+  vec3 half_size;
+  versor quaternion;
+
+  void (*configured)(void* user_data, struct zms_cuboid_window* cuboid_window);
 };
 
-struct zms_cuboid_window* zms_cuboid_window_create(
+struct zms_cuboid_window* zms_cuboid_window_create(void* user_data,
     struct zms_backend* backend, vec3 half_size, versor quaternion);
 
 void zms_cuboid_window_destroy(struct zms_cuboid_window* cuboid_window);

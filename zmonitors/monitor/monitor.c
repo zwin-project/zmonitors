@@ -46,7 +46,8 @@ zms_monitor_create(struct zms_backend* backend,
   half_size[0] = (float)monitor->screen_size.width / 2 / monitor->ppm;
   half_size[1] = (float)monitor->screen_size.height / 2 / monitor->ppm;
   half_size[2] = CUBOID_DEPTH;
-  cuboid_window = zms_cuboid_window_create(backend, half_size, quaternion);
+  cuboid_window =
+      zms_cuboid_window_create(monitor, backend, half_size, quaternion);
   if (cuboid_window == NULL) goto err_cuboid_window;
 
   paper = zms_ui_paper_create(cuboid_window);

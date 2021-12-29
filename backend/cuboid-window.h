@@ -7,7 +7,7 @@
 
 struct zms_cuboid_window_private {
   struct zgn_cuboid_window *proxy;
-  struct zms_virtual_object *virtual_object;
+  void *user_data;
 };
 
 #endif  //  ZMONITORS_BACKEND_CUBOID_WINDOW_H
