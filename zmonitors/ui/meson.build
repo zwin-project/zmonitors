@@ -1,4 +1,5 @@
 deps_zms_ui = [
+  dep_wayland_server,
   dep_zmonitors_backend,
 ]
 

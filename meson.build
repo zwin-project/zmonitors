@@ -7,8 +7,9 @@ project(
 )
 
 if get_option('debug')
-  add_global_arguments('-DDEBUG', language: [ 'c', 'cpp' ])
+  add_global_arguments('-DDEBUG', language: [ 'c' ])
 endif
+add_global_arguments('-D_GNU_SOURCE', language: [ 'c' ])
 
 public_inc = include_directories('include')
 
@@ -19,6 +20,10 @@ dep_wayland_protocols = dependency('wayland-protocols')
 dep_wayland_scanner = dependency('wayland-scanner', version: '>= 1.14.91')
 dep_zgn_protocol = dependency('zigen-protocols')
 dep_cglm = dependency('cglm')
+
+prog_python = import('python').find_installation('python3')
+files_textify_py = files('tools/textify.py')
+cmd_textify = [ prog_python, files_textify_py, '@INPUT@', '@OUTPUT@']
 
 subdir('protocols')
 subdir('util')

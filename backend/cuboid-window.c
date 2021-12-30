@@ -109,3 +109,9 @@ zms_cuboid_window_destroy(struct zms_cuboid_window *cuboid_window)
   free(cuboid_window->priv);
   free(cuboid_window);
 }
+
+ZMS_EXPORT void
+zms_cuboid_window_commit(struct zms_cuboid_window *cuboid_window)
+{
+  zgn_virtual_object_commit(cuboid_window->virtual_object->proxy);
+}

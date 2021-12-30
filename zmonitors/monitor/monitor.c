@@ -5,20 +5,12 @@
 #include <zmonitors-backend.h>
 #include <zmonitors-util.h>
 
+#include "monitor-internal.h"
+#include "screen.h"
 #include "ui.h"
 
 #define DEFAULT_PPM 1000
 #define CUBOID_DEPTH 0.01
-
-struct zms_monitor {
-  struct zms_backend* backend;
-  struct zms_compositor* compositor;
-
-  struct zms_screen_size screen_size;
-  float ppm;  // pixels per meter
-
-  struct zms_ui_root* ui_root;
-};
 
 ZMS_EXPORT struct zms_monitor*
 zms_monitor_create(struct zms_backend* backend,
@@ -26,6 +18,7 @@ zms_monitor_create(struct zms_backend* backend,
 {
   struct zms_monitor* monitor;
   struct zms_ui_root* ui_root;
+  struct zms_screen* screen;
   float ppm = DEFAULT_PPM;
   vec3 half_size;
   versor quaternion = GLM_QUAT_IDENTITY_INIT;
@@ -48,7 +41,14 @@ zms_monitor_create(struct zms_backend* backend,
   monitor->ppm = ppm;
   monitor->ui_root = ui_root;
 
+  screen = zms_screen_create(monitor);
+  if (screen == NULL) goto err_screen;
+  monitor->screen = screen;
+
   return monitor;
+
+err_screen:
+  zms_ui_root_destroy(ui_root);
 
 err_ui_root:
   free(monitor);
@@ -60,6 +60,7 @@ err:
 ZMS_EXPORT void
 zms_monitor_destroy(struct zms_monitor* monitor)
 {
+  zms_screen_destroy(monitor->screen);
   zms_ui_root_destroy(monitor->ui_root);
   free(monitor);
 }

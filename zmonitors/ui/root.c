@@ -10,10 +10,26 @@ static void
 cuboid_window_configured_handler(
     void* data, struct zms_cuboid_window* cuboid_window)
 {
+  // TODO: update geom
+  zms_log("[ui root] warn: configured handler not implemented yet\n");
+  Z_UNUSED(data);
+  Z_UNUSED(cuboid_window);
+}
+
+static void
+cuboid_window_first_configured_handler(
+    void* data, struct zms_cuboid_window* cuboid_window)
+{
   Z_UNUSED(cuboid_window);
   struct zms_ui_root* root = data;
-  // TODO: redraw
-  Z_UNUSED(root);
+  struct zms_ui_base* child;
+
+  wl_list_for_each(child, &root->base->children, link)
+      zms_ui_base_run_setup_phase(child);
+
+  zms_cuboid_window_commit(cuboid_window);
+
+  root->cuboid_window->configured = cuboid_window_configured_handler;
 }
 
 ZMS_EXPORT struct zms_ui_root*
@@ -30,7 +46,7 @@ zms_ui_root_create(
   cuboid_window =
       zms_cuboid_window_create(root, backend, half_size, quaternion);
   if (cuboid_window == NULL) goto err_cuboid_window;
-  cuboid_window->configured = cuboid_window_configured_handler;
+  cuboid_window->configured = cuboid_window_first_configured_handler;
 
   root->cuboid_window = cuboid_window;
 

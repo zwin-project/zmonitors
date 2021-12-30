@@ -6,14 +6,19 @@
 /* ui base */
 
 struct zms_ui_base_interface {
-  void (*setup)();
+  void (*setup)(void* user_data);
+  void (*teardown)(void* user_data);
 };
 
 struct zms_ui_base;
 
-struct zms_ui_base* zms_ui_base_create(struct zms_ui_base* parent);
+struct zms_ui_base* zms_ui_base_create(void* user_data,
+    const struct zms_ui_base_interface* interface, struct zms_ui_base* parent);
 
 void zms_ui_base_destroy(struct zms_ui_base* ui_base);
+
+struct zms_opengl_component* zms_ui_base_get_component(
+    struct zms_ui_base* base);
 
 /* root */
 

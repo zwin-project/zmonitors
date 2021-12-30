@@ -4,8 +4,26 @@ deps_zms_monitor = [
   dep_zms_ui,
 ]
 
+screen_vertex_glsl = custom_target(
+  'screen-vert.h',
+  command: cmd_textify + [ '-n', 'screen_vertex_shader' ],
+  input: 'screen.vert',
+  output: 'screen-vert.h'
+)
+
+screen_fragment_glsl = custom_target(
+  'screen-frag.h',
+  command: cmd_textify + [ '-n', 'screen_fragment_shader' ],
+  input: 'screen.frag',
+  output: 'screen-frag.h'
+)
+
 srcs_zms_monitor = [
   'monitor.c',
+  'screen.c',
+  zigen_opengl_client_protocol_h,
+  screen_vertex_glsl,
+  screen_fragment_glsl,
 ]
 
 lib_zms_monitor = static_library(

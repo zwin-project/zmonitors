@@ -47,6 +47,33 @@ struct zms_cuboid_window* zms_cuboid_window_create(void* user_data,
 
 void zms_cuboid_window_destroy(struct zms_cuboid_window* cuboid_window);
 
+void zms_cuboid_window_commit(struct zms_cuboid_window* cuboid_window);
+
+/* opengl shader */
+
+struct zms_opengl_shader_program;
+
+struct zms_opengl_shader_program* zms_opengl_shader_program_create(
+    struct zms_backend* backend, const char* vertex_shader,
+    size_t vertex_shader_size, const char* fragment_shader,
+    size_t fragment_shader_size);
+
+void zms_opengl_shader_program_destroy(
+    struct zms_opengl_shader_program* program);
+
+/* opengl vertex buffer*/
+
+struct zms_opengl_vertex_buffer;
+
+struct zms_opengl_vertex_buffer* zms_opengl_vertex_buffer_create(
+    struct zms_backend* backend, size_t size);
+
+void zms_opengl_vertex_buffer_destroy(
+    struct zms_opengl_vertex_buffer* vertex_buffer);
+
+int zms_opengl_vertex_buffer_get_fd(
+    struct zms_opengl_vertex_buffer* vertex_buffer);
+
 /* opengl component */
 
 struct zms_opengl_component_private;
@@ -59,5 +86,26 @@ struct zms_opengl_component* zms_opengl_component_create(
     struct zms_virtual_object* virtual_object);
 
 void zms_opengl_component_destroy(struct zms_opengl_component* component);
+
+void zms_opengl_component_attach_vertex_buffer(
+    struct zms_opengl_component* component,
+    struct zms_opengl_vertex_buffer* vertex_buffer);
+
+void zms_opengl_component_attach_shader_program(
+    struct zms_opengl_component* component,
+    struct zms_opengl_shader_program* shader);
+
+void zms_opengl_component_set_min(
+    struct zms_opengl_component* component, uint32_t min);
+
+void zms_opengl_component_set_count(
+    struct zms_opengl_component* component, uint32_t count);
+
+void zms_opengl_component_set_topology(
+    struct zms_opengl_component* component, uint32_t topology);
+
+void zms_opengl_component_add_vertex_attribute(
+    struct zms_opengl_component* component, uint32_t index, uint32_t size,
+    uint32_t type, uint32_t normalized, uint32_t stride, uint32_t pointer);
 
 #endif  //  ZMONITORS_BACKEND_H

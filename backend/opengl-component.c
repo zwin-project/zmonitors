@@ -5,6 +5,8 @@
 #include <zmonitors-util.h>
 
 #include "backend.h"
+#include "opengl-shader-program.h"
+#include "opengl-vertex-buffer.h"
 #include "virtual-object.h"
 
 ZMS_EXPORT struct zms_opengl_component*
@@ -48,4 +50,52 @@ zms_opengl_component_destroy(struct zms_opengl_component* component)
   zgn_opengl_component_destroy(component->priv->proxy);
   free(component->priv);
   free(component);
+}
+
+ZMS_EXPORT void
+zms_opengl_component_attach_vertex_buffer(
+    struct zms_opengl_component* component,
+    struct zms_opengl_vertex_buffer* vertex_buffer)
+{
+  zgn_opengl_component_attach_vertex_buffer(
+      component->priv->proxy, vertex_buffer->proxy);
+}
+
+ZMS_EXPORT void
+zms_opengl_component_attach_shader_program(
+    struct zms_opengl_component* component,
+    struct zms_opengl_shader_program* shader)
+{
+  zgn_opengl_component_attach_shader_program(
+      component->priv->proxy, shader->proxy);
+}
+
+ZMS_EXPORT void
+zms_opengl_component_set_min(
+    struct zms_opengl_component* component, uint32_t min)
+{
+  zgn_opengl_component_set_min(component->priv->proxy, min);
+}
+
+ZMS_EXPORT void
+zms_opengl_component_set_count(
+    struct zms_opengl_component* component, uint32_t count)
+{
+  zgn_opengl_component_set_count(component->priv->proxy, count);
+}
+
+ZMS_EXPORT void
+zms_opengl_component_set_topology(
+    struct zms_opengl_component* component, uint32_t topology)
+{
+  zgn_opengl_component_set_topology(component->priv->proxy, topology);
+}
+
+ZMS_EXPORT void
+zms_opengl_component_add_vertex_attribute(
+    struct zms_opengl_component* component, uint32_t index, uint32_t size,
+    uint32_t type, uint32_t normalized, uint32_t stride, uint32_t pointer)
+{
+  zgn_opengl_component_add_vertex_attribute(
+      component->priv->proxy, index, size, type, normalized, stride, pointer);
 }

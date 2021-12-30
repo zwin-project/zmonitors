@@ -4,6 +4,7 @@ subdir('ui')
 subdir('monitor')
 
 deps_zmonitors = [
+  dep_wayland_server,
   dep_zmonitors_backend,
   dep_zmonitors_server,
   dep_zmonitors_util,
