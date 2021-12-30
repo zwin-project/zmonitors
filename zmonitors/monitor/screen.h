@@ -8,6 +8,7 @@ struct zms_screen {
   struct zms_ui_base *base;
   struct zms_monitor *monitor;
 
+  struct zms_opengl_component *component;
   struct zms_opengl_shader_program *shader;
   struct zms_opengl_vertex_buffer *vertex_buffer;
 };

@@ -11,6 +11,28 @@
 
 #define DEFAULT_PPM 1000
 #define CUBOID_DEPTH 0.01
+#define CUBOID_PADDING 0.05
+
+static void
+ui_setup(struct zms_ui_base* ui_base)
+{
+  struct zms_monitor* monitor = ui_base->user_data;
+
+  glm_vec3_copy(ui_base->half_size, monitor->screen->base->half_size);
+  monitor->screen->base->half_size[0] -= CUBOID_PADDING;
+  monitor->screen->base->half_size[1] -= CUBOID_PADDING;
+}
+
+static void
+ui_teardown(struct zms_ui_base* ui_base)
+{
+  Z_UNUSED(ui_base);
+}
+
+static const struct zms_ui_base_interface ui_base_interface = {
+    .setup = ui_setup,
+    .teardown = ui_teardown,
+};
 
 ZMS_EXPORT struct zms_monitor*
 zms_monitor_create(struct zms_backend* backend,
@@ -29,10 +51,11 @@ zms_monitor_create(struct zms_backend* backend,
     goto err;
   }
 
-  half_size[0] = (float)size.width / 2 / ppm;
-  half_size[1] = (float)size.height / 2 / ppm;
+  half_size[0] = (float)size.width / 2 / ppm + CUBOID_PADDING;
+  half_size[1] = (float)size.height / 2 / ppm + CUBOID_PADDING;
   half_size[2] = CUBOID_DEPTH;
-  ui_root = zms_ui_root_create(backend, half_size, quaternion);
+  ui_root = zms_ui_root_create(
+      monitor, &ui_base_interface, backend, half_size, quaternion);
   if (ui_root == NULL) goto err_ui_root;
 
   monitor->backend = backend;

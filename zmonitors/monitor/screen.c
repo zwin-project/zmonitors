@@ -22,17 +22,16 @@ struct vertex_buffer {
 };
 
 static void
-ui_setup(void* data)
+ui_setup(struct zms_ui_base* ui_base)
 {
-  struct zms_screen* screen = data;
+  struct zms_screen* screen = ui_base->user_data;
   struct zms_backend* backend = screen->monitor->backend;
   struct zms_opengl_component* component;
   struct zms_opengl_shader_program* shader;
   struct zms_opengl_vertex_buffer* vertex_buffer;
 
-  component = zms_ui_base_get_component(screen->base);
-
-  // TODO: move these api calls to ui_base
+  component =
+      zms_opengl_component_create(ui_base->root->cuboid_window->virtual_object);
 
   zms_opengl_component_set_topology(
       component, ZGN_OPENGL_TOPOLOGY_TRIANGLE_STRIP);
@@ -46,18 +45,14 @@ ui_setup(void* data)
       zms_opengl_vertex_buffer_create(backend, sizeof(struct vertex_buffer));
 
   {
-    // FIXME:
     int fd = zms_opengl_vertex_buffer_get_fd(vertex_buffer);
     struct vertex_buffer* data =
         mmap(NULL, sizeof(struct vertex_buffer), PROT_WRITE, MAP_SHARED, fd, 0);
-    vec3 A = {-0.2f, -0.2f, 0.0f};
-    vec3 B = {-0.2f, +0.2f, 0.0f};
-    vec3 C = {+0.2f, -0.2f, 0.0f};
-    vec3 D = {+0.2f, +0.2f, 0.0f};
-    glm_vec3_copy(A, data->vertices[0].p);
-    glm_vec3_copy(B, data->vertices[1].p);
-    glm_vec3_copy(C, data->vertices[2].p);
-    glm_vec3_copy(D, data->vertices[3].p);
+    for (int i = 0; i < 4; i++) {
+      glm_vec3_copy(ui_base->half_size, data->vertices[i].p);
+      data->vertices[i].p[0] *= (i < 2 ? 1 : -1);
+      data->vertices[i].p[1] *= (i % 2 == 1 ? 1 : -1);
+    }
     munmap(data, sizeof(struct vertex_buffer));
   }
 
@@ -67,16 +62,18 @@ ui_setup(void* data)
   zms_opengl_component_add_vertex_attribute(component, 0, 3,
       ZGN_OPENGL_VERTEX_ATTRIBUTE_TYPE_FLOAT, false, sizeof(struct vertex), 0);
 
+  screen->component = component;
   screen->shader = shader;
   screen->vertex_buffer = vertex_buffer;
 }
 
 static void
-ui_teardown(void* data)
+ui_teardown(struct zms_ui_base* ui_base)
 {
-  struct zms_screen* screen = data;
+  struct zms_screen* screen = ui_base->user_data;
   zms_opengl_vertex_buffer_destroy(screen->vertex_buffer);
   zms_opengl_shader_program_destroy(screen->shader);
+  zms_opengl_component_destroy(screen->component);
   screen->shader = NULL;
 }
 

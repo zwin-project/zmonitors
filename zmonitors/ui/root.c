@@ -1,8 +1,7 @@
-#include "root.h"
-
 #include <cglm/cglm.h>
 #include <zmonitors-util.h>
 
+#include "base.h"
 #include "monitor.h"
 #include "ui.h"
 
@@ -22,10 +21,9 @@ cuboid_window_first_configured_handler(
 {
   Z_UNUSED(cuboid_window);
   struct zms_ui_root* root = data;
-  struct zms_ui_base* child;
 
-  wl_list_for_each(child, &root->base->children, link)
-      zms_ui_base_run_setup_phase(child);
+  glm_vec3_copy(cuboid_window->half_size, root->base->half_size);
+  zms_ui_base_run_setup_phase(root->base);
 
   zms_cuboid_window_commit(cuboid_window);
 
@@ -33,8 +31,9 @@ cuboid_window_first_configured_handler(
 }
 
 ZMS_EXPORT struct zms_ui_root*
-zms_ui_root_create(
-    struct zms_backend* backend, vec3 half_size, versor quaternion)
+zms_ui_root_create(void* user_data,
+    const struct zms_ui_base_interface* interface, struct zms_backend* backend,
+    vec3 half_size, versor quaternion)
 {
   struct zms_ui_root* root;
   struct zms_cuboid_window* cuboid_window;
@@ -50,7 +49,7 @@ zms_ui_root_create(
 
   root->cuboid_window = cuboid_window;
 
-  base = zms_ui_base_create_root(root);
+  base = zms_ui_base_create_root(root, user_data, interface);
   if (base == NULL) goto err_base;
   root->base = base;
 
