@@ -6,6 +6,7 @@
 
 #include "backend.h"
 #include "opengl-shader-program.h"
+#include "opengl-texture.h"
 #include "opengl-vertex-buffer.h"
 #include "virtual-object.h"
 
@@ -68,6 +69,13 @@ zms_opengl_component_attach_shader_program(
 {
   zgn_opengl_component_attach_shader_program(
       component->priv->proxy, shader->proxy);
+}
+
+ZMS_EXPORT void
+zms_opengl_component_attach_texture(
+    struct zms_opengl_component* component, struct zms_opengl_texture* texture)
+{
+  zgn_opengl_component_attach_texture(component->priv->proxy, texture->proxy);
 }
 
 ZMS_EXPORT void

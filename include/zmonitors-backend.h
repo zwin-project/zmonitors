@@ -74,6 +74,15 @@ void zms_opengl_vertex_buffer_destroy(
 int zms_opengl_vertex_buffer_get_fd(
     struct zms_opengl_vertex_buffer* vertex_buffer);
 
+/* opengl texture */
+
+struct zms_opengl_texture;
+
+struct zms_opengl_texture* zms_opengl_texture_create_by_fd(
+    struct zms_backend* backend, int fd, struct zms_screen_size size);
+
+void zms_opengl_texture_destroy(struct zms_opengl_texture* texture);
+
 /* opengl component */
 
 struct zms_opengl_component_private;
@@ -94,6 +103,9 @@ void zms_opengl_component_attach_vertex_buffer(
 void zms_opengl_component_attach_shader_program(
     struct zms_opengl_component* component,
     struct zms_opengl_shader_program* shader);
+
+void zms_opengl_component_attach_texture(
+    struct zms_opengl_component* component, struct zms_opengl_texture* texture);
 
 void zms_opengl_component_set_min(
     struct zms_opengl_component* component, uint32_t min);

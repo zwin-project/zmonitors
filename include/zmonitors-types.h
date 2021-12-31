@@ -8,7 +8,7 @@ struct zms_screen_size {
 };
 
 struct zms_bgra {
-  float b, g, r, a;
+  uint8_t b, g, r, a;
 };
 
 #endif  //  ZMONITORS_SERVER_TYPES_H

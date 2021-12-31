@@ -33,6 +33,8 @@ struct zms_output *zms_output_create(struct zms_compositor *compositor,
 
 void zms_output_destroy(struct zms_output *output);
 
+int zms_output_get_fd(struct zms_output *output);
+
 /* view */
 
 struct zms_view_private;

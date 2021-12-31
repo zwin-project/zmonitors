@@ -1,5 +1,6 @@
 #include "output.h"
 
+#include <sys/mman.h>
 #include <unistd.h>
 #include <zmonitors-server.h>
 
@@ -97,7 +98,7 @@ zms_output_create(struct zms_compositor* compositor,
     goto err_priv;
   }
 
-  fd_size = size.height * size.height * sizeof(struct zms_bgra);
+  fd_size = size.width * size.height * sizeof(struct zms_bgra);
   fd = zms_util_create_shared_fd(fd_size, "zmonitors-output");
   if (fd < 0) goto err_fd;
 
@@ -119,6 +120,41 @@ zms_output_create(struct zms_compositor* compositor,
 
   output->priv = priv;
   wl_list_insert(&compositor->priv->output_list, &output->link);
+
+  {
+    // FIXME: fill real contents
+    struct zms_bgra* data = mmap(NULL, fd_size, PROT_WRITE, MAP_SHARED, fd, 0);
+    float rands[100];
+    size_t i = 0;
+    for (int j = 0; j < 100; j++)
+      rands[j] = (float)rand() * UINT8_MAX / RAND_MAX;
+
+    for (int y = 0; y < size.height; y++) {
+      for (int x = 0; x < size.width; x++) {
+        int dx = (x % 100) - 50;
+        int dy = (y % 100) - 50;
+        int index = x / 100 + (y / 100) * 17;
+        int distance = dx * dx + dy * dy;
+        data[i].a = UINT8_MAX;
+        if (1600 < distance && distance < 2500) {
+          data[i].r = rands[(index) % 100];
+          data[i].g = rands[(index + 1) % 100];
+          data[i].b = rands[(index + 2) % 100];
+        } else if ((1500 < distance && distance < 1600) ||
+                   (2500 < distance && distance < 2600)) {
+          data[i].r = (rands[(index) % 100] + UINT8_MAX) / 2;
+          data[i].g = (rands[(index + 1) % 100] + UINT8_MAX) / 2;
+          data[i].b = (rands[(index + 2) % 100] + UINT8_MAX) / 2;
+        } else {
+          data[i].r = UINT8_MAX;
+          data[i].g = UINT8_MAX;
+          data[i].b = UINT8_MAX;
+        }
+        i++;
+      }
+    }
+    munmap(data, fd_size);
+  }
 
   return output;
 
@@ -154,4 +190,10 @@ zms_output_destroy(struct zms_output* output)
   free(output->priv->manufacturer);
   free(output->priv);
   free(output);
+}
+
+ZMS_EXPORT int
+zms_output_get_fd(struct zms_output* output)
+{
+  return output->priv->fd;
 }

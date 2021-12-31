@@ -10,6 +10,7 @@ srcs_zmonitors_backend = [
   'cuboid-window.c',
   'opengl-component.c',
   'opengl-shader-program.c',
+  'opengl-texture.c',
   'opengl-vertex-buffer.c',
   'virtual-object.c',
   zigen_protocol_c,

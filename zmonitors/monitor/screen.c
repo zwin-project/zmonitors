@@ -29,6 +29,8 @@ ui_setup(struct zms_ui_base* ui_base)
   struct zms_opengl_component* component;
   struct zms_opengl_shader_program* shader;
   struct zms_opengl_vertex_buffer* vertex_buffer;
+  struct zms_opengl_texture* texture;
+  int output_fd;
 
   component =
       zms_opengl_component_create(ui_base->root->cuboid_window->virtual_object);
@@ -44,33 +46,46 @@ ui_setup(struct zms_ui_base* ui_base)
   vertex_buffer =
       zms_opengl_vertex_buffer_create(backend, sizeof(struct vertex_buffer));
 
+  output_fd = zms_output_get_fd(screen->monitor->output);
+
+  texture = zms_opengl_texture_create_by_fd(
+      backend, output_fd, screen->monitor->screen_size);
+
   {
     int fd = zms_opengl_vertex_buffer_get_fd(vertex_buffer);
     struct vertex_buffer* data =
         mmap(NULL, sizeof(struct vertex_buffer), PROT_WRITE, MAP_SHARED, fd, 0);
     for (int i = 0; i < 4; i++) {
       glm_vec3_copy(ui_base->half_size, data->vertices[i].p);
-      data->vertices[i].p[0] *= (i < 2 ? 1 : -1);
+      data->vertices[i].p[0] *= (i < 2 ? -1 : 1);
       data->vertices[i].p[1] *= (i % 2 == 1 ? 1 : -1);
+      data->vertices[i].uv.u = (i < 2 ? 0 : 1);
+      data->vertices[i].uv.v = (i % 2 == 1 ? 0 : 1);
     }
     munmap(data, sizeof(struct vertex_buffer));
   }
 
   zms_opengl_component_attach_vertex_buffer(component, vertex_buffer);
   zms_opengl_component_attach_shader_program(component, shader);
+  zms_opengl_component_attach_texture(component, texture);
 
   zms_opengl_component_add_vertex_attribute(component, 0, 3,
       ZGN_OPENGL_VERTEX_ATTRIBUTE_TYPE_FLOAT, false, sizeof(struct vertex), 0);
+  zms_opengl_component_add_vertex_attribute(component, 1, 2,
+      ZGN_OPENGL_VERTEX_ATTRIBUTE_TYPE_FLOAT, false, sizeof(struct vertex),
+      offsetof(struct vertex, uv));
 
   screen->component = component;
   screen->shader = shader;
   screen->vertex_buffer = vertex_buffer;
+  screen->texture = texture;
 }
 
 static void
 ui_teardown(struct zms_ui_base* ui_base)
 {
   struct zms_screen* screen = ui_base->user_data;
+  zms_opengl_texture_destroy(screen->texture);
   zms_opengl_vertex_buffer_destroy(screen->vertex_buffer);
   zms_opengl_shader_program_destroy(screen->shader);
   zms_opengl_component_destroy(screen->component);
