@@ -62,7 +62,6 @@ zms_compositor_create()
   struct wl_global* global;
   struct zms_wm_base* wm_base;
   struct zms_seat* seat;
-  struct zms_output* output;
   const char* socket;
 
   display = wl_display_create();
@@ -96,6 +95,7 @@ zms_compositor_create()
     goto err_global;
   }
 
+  wl_list_init(&priv->output_list);
   compositor->priv = priv;
   compositor->display = display;
   wl_list_init(&compositor->view_list);
@@ -119,20 +119,10 @@ zms_compositor_create()
     goto err_seat;
   }
 
-  output = zms_output_create(compositor);
-  if (output == NULL) {
-    zms_log("failed to create a output\n");
-    goto err_output;
-  }
-
   compositor->priv->wm_base = wm_base;
   compositor->seat = seat;
-  compositor->output = output;
 
   return compositor;
-
-err_output:
-  zms_seat_destroy(seat);
 
 err_seat:
   zms_wm_base_destroy(wm_base);
@@ -154,7 +144,6 @@ ZMS_EXPORT void
 zms_compositor_destroy(struct zms_compositor* compositor)
 {
   wl_list_remove(&compositor->view_list);
-  zms_output_destroy(compositor->output);
   zms_seat_destroy(compositor->seat);
   zms_wm_base_destroy(compositor->priv->wm_base);
   wl_display_destroy(compositor->display);

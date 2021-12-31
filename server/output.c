@@ -101,6 +101,7 @@ zms_output_create(struct zms_compositor* compositor)
   wl_list_init(&priv->resource_list);
 
   output->priv = priv;
+  wl_list_insert(&compositor->priv->output_list, &output->link);
 
   return output;
 
@@ -126,6 +127,7 @@ zms_output_destroy(struct zms_output* output)
     wl_list_remove(wl_resource_get_link(resource));
   }
 
+  wl_list_remove(&output->link);
   wl_global_destroy(output->priv->global);
   free(output->priv);
   free(output);

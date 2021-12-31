@@ -39,6 +39,7 @@ zms_monitor_create(struct zms_backend* backend,
     struct zms_compositor* compositor, struct zms_screen_size size)
 {
   struct zms_monitor* monitor;
+  struct zms_output* output;
   struct zms_ui_root* ui_root;
   struct zms_screen* screen;
   float ppm = DEFAULT_PPM;
@@ -51,6 +52,9 @@ zms_monitor_create(struct zms_backend* backend,
     goto err;
   }
 
+  output = zms_output_create(compositor);
+  if (output == NULL) goto err_output;
+
   half_size[0] = (float)size.width / 2 / ppm + CUBOID_PADDING;
   half_size[1] = (float)size.height / 2 / ppm + CUBOID_PADDING;
   half_size[2] = CUBOID_DEPTH;
@@ -60,6 +64,7 @@ zms_monitor_create(struct zms_backend* backend,
 
   monitor->backend = backend;
   monitor->compositor = compositor;
+  monitor->output = output;
   monitor->screen_size = size;
   monitor->ppm = ppm;
   monitor->ui_root = ui_root;
@@ -74,6 +79,9 @@ err_screen:
   zms_ui_root_destroy(ui_root);
 
 err_ui_root:
+  zms_output_destroy(output);
+
+err_output:
   free(monitor);
 
 err:
@@ -85,5 +93,6 @@ zms_monitor_destroy(struct zms_monitor* monitor)
 {
   zms_screen_destroy(monitor->screen);
   zms_ui_root_destroy(monitor->ui_root);
+  zms_output_destroy(monitor->output);
   free(monitor);
 }

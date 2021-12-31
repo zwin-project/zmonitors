@@ -4,6 +4,7 @@
 struct zms_monitor {
   struct zms_backend* backend;
   struct zms_compositor* compositor;
+  struct zms_output* output;
 
   struct zms_screen_size screen_size;
   float ppm;  // pixels per meter
