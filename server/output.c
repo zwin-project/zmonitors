@@ -3,6 +3,7 @@
 #include <zmonitors-server.h>
 
 #include "compositor.h"
+#include "string.h"
 
 static void
 zms_output_protocol_release(
@@ -20,25 +21,27 @@ static void
 zms_output_send_geometry(struct zms_output* output, struct wl_client* client)
 {
   struct wl_resource* resource;
-  int32_t x, y, width, height, refresh;
+  int32_t x, y, refresh;
 
   // TODO: get geometry
   x = 0;
   y = 0;
-  width = 1920;
-  height = 1080;
   refresh = 60000;
 
   wl_resource_for_each(resource, &output->priv->resource_list)
   {
     if (wl_resource_get_client(resource) != client) continue;
-    wl_output_send_geometry(resource, x, y, width, height,
-        WL_OUTPUT_SUBPIXEL_UNKNOWN, "zmonitors", "virtual monitor",
+    int physical_width_millimeter = output->priv->physical_size[0] * 1000;
+    int physical_height_millimeter = output->priv->physical_size[1] * 1000;
+
+    wl_output_send_geometry(resource, x, y, physical_width_millimeter,
+        physical_height_millimeter, WL_OUTPUT_SUBPIXEL_UNKNOWN,
+        output->priv->manufacturer, output->priv->model,
         WL_OUTPUT_TRANSFORM_NORMAL);
     wl_output_send_scale(resource, 1);
     wl_output_send_mode(resource,
-        WL_OUTPUT_MODE_CURRENT | WL_OUTPUT_MODE_PREFERRED, width, height,
-        refresh);
+        WL_OUTPUT_MODE_CURRENT | WL_OUTPUT_MODE_PREFERRED,
+        output->priv->size.width, output->priv->size.height, refresh);
     wl_output_send_done(resource);
   }
 }
@@ -71,7 +74,9 @@ zms_output_bind(
 }
 
 ZMS_EXPORT struct zms_output*
-zms_output_create(struct zms_compositor* compositor)
+zms_output_create(struct zms_compositor* compositor,
+    struct zms_screen_size size, vec2 physical_size, char* manufacturer,
+    char* model)
 {
   struct zms_output* output;
   struct zms_output_private* priv;
@@ -98,6 +103,10 @@ zms_output_create(struct zms_compositor* compositor)
 
   priv->global = global;
   priv->compositor = compositor;
+  priv->size = size;
+  glm_vec3_copy(physical_size, priv->physical_size);
+  priv->manufacturer = strdup(manufacturer);
+  priv->model = strdup(model);
   wl_list_init(&priv->resource_list);
 
   output->priv = priv;
@@ -129,6 +138,8 @@ zms_output_destroy(struct zms_output* output)
 
   wl_list_remove(&output->link);
   wl_global_destroy(output->priv->global);
+  free(output->priv->model);
+  free(output->priv->manufacturer);
   free(output->priv);
   free(output);
 }

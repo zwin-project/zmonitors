@@ -44,7 +44,15 @@ zms_monitor_create(struct zms_backend* backend,
   struct zms_screen* screen;
   float ppm = DEFAULT_PPM;
   vec3 half_size;
+  vec2 screen_size;
   versor quaternion = GLM_QUAT_IDENTITY_INIT;
+
+  screen_size[0] = (float)size.width / 2 / ppm;
+  screen_size[1] = (float)size.height / 2 / ppm;
+
+  half_size[0] = screen_size[0] + CUBOID_PADDING;
+  half_size[1] = screen_size[1] + CUBOID_PADDING;
+  half_size[2] = CUBOID_DEPTH;
 
   monitor = zalloc(sizeof *monitor);
   if (monitor == NULL) {
@@ -52,12 +60,10 @@ zms_monitor_create(struct zms_backend* backend,
     goto err;
   }
 
-  output = zms_output_create(compositor);
+  output = zms_output_create(
+      compositor, size, screen_size, "zmonitors", "virtual monitor");
   if (output == NULL) goto err_output;
 
-  half_size[0] = (float)size.width / 2 / ppm + CUBOID_PADDING;
-  half_size[1] = (float)size.height / 2 / ppm + CUBOID_PADDING;
-  half_size[2] = CUBOID_DEPTH;
   ui_root = zms_ui_root_create(
       monitor, &ui_base_interface, backend, half_size, quaternion);
   if (ui_root == NULL) goto err_ui_root;

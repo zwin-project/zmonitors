@@ -27,7 +27,9 @@ struct zms_output {
   struct wl_list link;  // -> zms_compositor.priv.output_list
 };
 
-struct zms_output *zms_output_create(struct zms_compositor *compositor);
+struct zms_output *zms_output_create(struct zms_compositor *compositor,
+    struct zms_screen_size size, vec2 physical_size, char *manufacturer,
+    char *model);
 
 void zms_output_destroy(struct zms_output *output);
 

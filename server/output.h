@@ -9,6 +9,11 @@ struct zms_output_private {
   struct wl_global* global;
   struct zms_compositor* compositor;
 
+  struct zms_screen_size size;
+  vec2 physical_size;
+  char* manufacturer;
+  char* model;
+
   struct wl_list resource_list;
 };
 
