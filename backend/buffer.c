@@ -5,22 +5,6 @@
 #include <wayland-client.h>
 #include <zmonitors-backend.h>
 
-static int
-create_shared_fd(off_t size)
-{
-  const char *name = "zms-buffer";
-  int fd = memfd_create(name, MFD_CLOEXEC | MFD_ALLOW_SEALING);
-  if (fd < 0) return fd;
-  unlink(name);
-
-  if (ftruncate(fd, size) < 0) {
-    close(fd);
-    return -1;
-  }
-
-  return fd;
-}
-
 static void
 buffer_release(void *data, struct wl_buffer *wl_buffer)
 {
@@ -44,7 +28,7 @@ zms_buffer_create(struct zms_backend *backend, size_t size)
   buffer = zalloc(sizeof *buffer);
   if (buffer == NULL) goto err;
 
-  fd = create_shared_fd(size);
+  fd = zms_util_create_shared_fd(size, "zmonitors-buffer");
   if (fd < 0) goto err_fd;
 
   pool = wl_shm_create_pool(backend->shm, fd, size);

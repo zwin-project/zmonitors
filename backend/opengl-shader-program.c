@@ -8,22 +8,6 @@
 
 #include "backend.h"
 
-static int
-create_shared_fd(off_t size)
-{
-  const char* name = "zms-shader";
-  int fd = memfd_create(name, MFD_CLOEXEC | MFD_ALLOW_SEALING);
-  if (fd < 0) return fd;
-  unlink(name);
-
-  if (ftruncate(fd, size) < 0) {
-    close(fd);
-    return -1;
-  }
-
-  return fd;
-}
-
 ZMS_EXPORT struct zms_opengl_shader_program*
 zms_opengl_shader_program_create(struct zms_backend* backend,
     const char* vertex_shader, size_t vertex_shader_size,
@@ -40,7 +24,8 @@ zms_opengl_shader_program_create(struct zms_backend* backend,
   proxy = zgn_opengl_create_shader_program(backend->opengl);
   if (proxy == NULL) goto err_proxy;
 
-  vertex_shader_fd = create_shared_fd(vertex_shader_size);
+  vertex_shader_fd =
+      zms_util_create_shared_fd(vertex_shader_size, "zmonitors-vert-shader");
   {
     void* data = mmap(
         NULL, vertex_shader_size, PROT_WRITE, MAP_SHARED, vertex_shader_fd, 0);
@@ -52,7 +37,8 @@ zms_opengl_shader_program_create(struct zms_backend* backend,
   zgn_opengl_shader_program_set_vertex_shader(
       proxy, vertex_shader_fd, vertex_shader_size);
 
-  fragment_shader_fd = create_shared_fd(fragment_shader_size);
+  fragment_shader_fd =
+      zms_util_create_shared_fd(fragment_shader_size, "zmonitors-frag-shader");
   {
     void* data = mmap(NULL, fragment_shader_size, PROT_WRITE, MAP_SHARED,
         fragment_shader_fd, 0);

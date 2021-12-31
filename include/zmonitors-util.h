@@ -34,6 +34,8 @@ zalloc(size_t size)
   return calloc(1, size);
 }
 
+int zms_util_create_shared_fd(size_t size, const char *name);
+
 int glm_vec3_from_wl_array(vec3 v, struct wl_array *array);
 
 void glm_vec3_to_wl_array(vec3 v, struct wl_array *array);

@@ -1,5 +1,6 @@
 #include "output.h"
 
+#include <unistd.h>
 #include <zmonitors-server.h>
 
 #include "compositor.h"
@@ -81,6 +82,8 @@ zms_output_create(struct zms_compositor* compositor,
   struct zms_output* output;
   struct zms_output_private* priv;
   struct wl_global* global;
+  int fd;
+  size_t fd_size;
 
   output = zalloc(sizeof *output);
   if (output == NULL) {
@@ -93,6 +96,10 @@ zms_output_create(struct zms_compositor* compositor,
     zms_log("failed to allocate memory\n");
     goto err_priv;
   }
+
+  fd_size = size.height * size.height * sizeof(struct zms_bgra);
+  fd = zms_util_create_shared_fd(fd_size, "zmonitors-output");
+  if (fd < 0) goto err_fd;
 
   global = wl_global_create(
       compositor->display, &wl_output_interface, 3, output, zms_output_bind);
@@ -107,6 +114,7 @@ zms_output_create(struct zms_compositor* compositor,
   glm_vec3_copy(physical_size, priv->physical_size);
   priv->manufacturer = strdup(manufacturer);
   priv->model = strdup(model);
+  priv->fd = fd;
   wl_list_init(&priv->resource_list);
 
   output->priv = priv;
@@ -115,6 +123,9 @@ zms_output_create(struct zms_compositor* compositor,
   return output;
 
 err_global:
+  close(fd);
+
+err_fd:
   free(priv);
 
 err_priv:
@@ -138,6 +149,7 @@ zms_output_destroy(struct zms_output* output)
 
   wl_list_remove(&output->link);
   wl_global_destroy(output->priv->global);
+  close(output->priv->fd);
   free(output->priv->model);
   free(output->priv->manufacturer);
   free(output->priv);

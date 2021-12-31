@@ -14,6 +14,8 @@ struct zms_output_private {
   char* manufacturer;
   char* model;
 
+  int fd;
+
   struct wl_list resource_list;
 };
 

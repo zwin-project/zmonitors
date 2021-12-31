@@ -4,6 +4,7 @@ deps_zmonitors_util = [
 
 srcs_zmonitors_util = [
   'cglm.c',
+  'fd.c',
   'log.c',
 ]
 
