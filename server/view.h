@@ -8,6 +8,10 @@
 
 struct zms_view_private {
   struct zms_view* pub;
+
+  /* be careful of its data consistency with zms_view_private.link; nullable */
+  struct zms_output* output;
+  struct wl_list link; /* must be in the self->output->priv->view_list */
 };
 
 struct zms_view* zms_view_create(struct zms_compositor* compositor);

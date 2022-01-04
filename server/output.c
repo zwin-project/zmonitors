@@ -6,6 +6,7 @@
 
 #include "compositor.h"
 #include "string.h"
+#include "view.h"
 
 static void
 zms_output_protocol_release(
@@ -119,6 +120,7 @@ zms_output_create(struct zms_compositor* compositor,
   priv->model = strdup(model);
   priv->fd = fd;
   wl_list_init(&priv->resource_list);
+  wl_list_init(&priv->view_list);
 
   output->priv = priv;
   wl_list_insert(&compositor->priv->output_list, &output->link);
@@ -224,4 +226,23 @@ ZMS_EXPORT int
 zms_output_get_fd(struct zms_output* output)
 {
   return output->priv->fd;
+}
+
+ZMS_EXPORT void
+zms_output_add_view(struct zms_output* output, struct zms_view* view)
+{
+  if (view->priv->output) zms_output_remove_view(view);
+  view->priv->output = output;
+  wl_list_insert(&output->priv->view_list, &view->priv->link);
+}
+
+ZMS_EXPORT void
+zms_output_remove_view(struct zms_view* view)
+{
+  struct zms_output* output = view->priv->output;
+  Z_UNUSED(output);
+
+  view->priv->output = NULL;
+  wl_list_remove(&view->priv->link);
+  wl_list_init(&view->priv->link);
 }

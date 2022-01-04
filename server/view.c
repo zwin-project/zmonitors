@@ -3,12 +3,14 @@
 #include <zmonitors-server.h>
 
 #include "compositor.h"
+#include "output.h"
 
 ZMS_EXPORT struct zms_view*
 zms_view_create(struct zms_compositor* compositor)
 {
   struct zms_view* view;
   struct zms_view_private* priv;
+  struct zms_output* primary_output;
 
   view = zalloc(sizeof *view);
   if (view == NULL) goto err;
@@ -17,9 +19,12 @@ zms_view_create(struct zms_compositor* compositor)
   if (priv == NULL) goto err_priv;
 
   priv->pub = view;
+  priv->output = NULL;
 
   view->priv = priv;
-  wl_list_insert(&compositor->view_list, &view->link);
+
+  primary_output = zms_compositor_get_primary_output(compositor);
+  zms_output_add_view(primary_output, view);
 
   return view;
 
@@ -33,7 +38,7 @@ err:
 ZMS_EXPORT void
 zms_view_destroy(struct zms_view* view)
 {
-  wl_list_remove(&view->link);
+  zms_output_remove_view(view);
   free(view->priv);
   free(view);
 }

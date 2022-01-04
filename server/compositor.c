@@ -98,7 +98,6 @@ zms_compositor_create()
   wl_list_init(&priv->output_list);
   compositor->priv = priv;
   compositor->display = display;
-  wl_list_init(&compositor->view_list);
 
   /* create global objects */
 
@@ -143,10 +142,21 @@ err_display:
 ZMS_EXPORT void
 zms_compositor_destroy(struct zms_compositor* compositor)
 {
-  wl_list_remove(&compositor->view_list);
   zms_seat_destroy(compositor->seat);
   zms_wm_base_destroy(compositor->priv->wm_base);
   wl_display_destroy(compositor->display);
   free(compositor->priv);
   free(compositor);
+}
+
+ZMS_EXPORT struct zms_output*
+zms_compositor_get_primary_output(struct zms_compositor* compositor)
+{
+  struct zms_output* output;
+
+  assert(wl_list_length(&compositor->priv->output_list) > 0);
+
+  wl_list_for_each(output, &compositor->priv->output_list, link) return output;
+
+  assert(false && "not reached");
 }

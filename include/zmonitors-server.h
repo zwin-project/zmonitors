@@ -51,7 +51,6 @@ struct zms_view_private;
 
 struct zms_view {
   struct zms_view_private *priv;
-  struct wl_list link;  // -> zms_compositor.view_list
 };
 
 /* compositor */
@@ -62,7 +61,6 @@ struct zms_compositor {
   struct zms_compositor_private *priv;
 
   struct wl_display *display;
-  struct wl_list view_list;
 
   struct zms_seat *seat;
 };
