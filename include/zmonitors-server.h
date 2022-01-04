@@ -20,7 +20,12 @@ struct zms_seat {
 
 /* output */
 
+struct zms_output;
 struct zms_output_private;
+
+struct zms_output_interface {
+  void (*schedule_repaint)(void *user_data, struct zms_output *output);
+};
 
 struct zms_output {
   struct zms_output_private *priv;
@@ -33,7 +38,12 @@ struct zms_output *zms_output_create(struct zms_compositor *compositor,
 
 void zms_output_destroy(struct zms_output *output);
 
+void zms_output_set_implementation(struct zms_output *output, void *user_data,
+    const struct zms_output_interface *interface);
+
 int zms_output_get_fd(struct zms_output *output);
+
+void zms_output_frame(struct zms_output *output, uint32_t time);
 
 /* view */
 

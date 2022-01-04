@@ -7,11 +7,14 @@
 struct zms_screen {
   struct zms_ui_base *base;
   struct zms_monitor *monitor;
+  struct zms_output *output;
 
   struct zms_opengl_component *component;
   struct zms_opengl_shader_program *shader;
   struct zms_opengl_vertex_buffer *vertex_buffer;
   struct zms_opengl_texture *texture;
+
+  bool texture_changed;
 };
 
 struct zms_screen *zms_screen_create(struct zms_monitor *monitor);

@@ -8,4 +8,6 @@ struct zms_opengl_texture {
   struct zms_buffer *buffer;
 };
 
+void zms_opengl_texture_buffer_updated(struct zms_opengl_texture *texture);
+
 #endif  //  ZMONITORS_BACKEND_OPENGL_TEXTURE_H

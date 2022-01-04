@@ -47,3 +47,9 @@ zms_opengl_texture_destroy(struct zms_opengl_texture* texture)
   zgn_opengl_texture_destroy(texture->proxy);
   free(texture);
 }
+
+ZMS_EXPORT void
+zms_opengl_texture_buffer_updated(struct zms_opengl_texture* texture)
+{
+  zgn_opengl_texture_attach_2d(texture->proxy, texture->buffer->proxy);
+}

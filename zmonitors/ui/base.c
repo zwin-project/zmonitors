@@ -3,6 +3,8 @@
 #include <zmonitors-backend.h>
 #include <zmonitors-util.h>
 
+#include "root.h"
+
 ZMS_EXPORT struct zms_ui_base*
 zms_ui_base_create(void* user_data,
     const struct zms_ui_base_interface* interface, struct zms_ui_base* parent)
@@ -64,6 +66,23 @@ zms_ui_base_destroy(struct zms_ui_base* ui_base)
 }
 
 ZMS_EXPORT void
+zms_ui_base_schedule_repaint(struct zms_ui_base* ui_base)
+{
+  switch (ui_base->root->frame_state) {
+    case ZMS_UI_FRAME_STATE_REPAINT_SCHEDULED:
+      // fall through
+    case ZMS_UI_FRAME_STATE_WAITING_NEXT_FRAME:
+      ui_base->root->frame_state = ZMS_UI_FRAME_STATE_REPAINT_SCHEDULED;
+      break;
+
+    case ZMS_UI_FRAME_STATE_WAITING_CONTENT_UPDATE:
+      zms_ui_base_run_repaint_phase(ui_base->root->base);
+      zms_ui_root_commit(ui_base->root);
+      break;
+  }
+}
+
+ZMS_EXPORT void
 zms_ui_base_run_setup_phase(struct zms_ui_base* ui_base)
 {
   ui_base->interface->setup(ui_base);
@@ -72,4 +91,24 @@ zms_ui_base_run_setup_phase(struct zms_ui_base* ui_base)
   struct zms_ui_base* child;
   wl_list_for_each(child, &ui_base->children, link)
       zms_ui_base_run_setup_phase(child);
+}
+
+ZMS_EXPORT void
+zms_ui_base_run_repaint_phase(struct zms_ui_base* ui_base)
+{
+  ui_base->interface->repaint(ui_base);
+
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+      zms_ui_base_run_repaint_phase(child);
+}
+
+ZMS_EXPORT void
+zms_ui_base_run_frame_phase(struct zms_ui_base* ui_base, uint32_t time)
+{
+  ui_base->interface->frame(ui_base, time);
+
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+      zms_ui_base_run_frame_phase(child, time);
 }

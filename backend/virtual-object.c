@@ -3,6 +3,7 @@
 #include <zmonitors-util.h>
 
 #include "backend.h"
+#include "frame-callback.h"
 
 ZMS_EXPORT struct zms_virtual_object *
 zms_virtual_object_create(struct zms_backend *backend)
@@ -20,6 +21,7 @@ zms_virtual_object_create(struct zms_backend *backend)
   wl_proxy_set_user_data((struct wl_proxy *)proxy, virtual_object);
 
   virtual_object->backend = backend;
+  zms_signal_init(&virtual_object->destroy_signal);
 
   return virtual_object;
 
@@ -33,6 +35,8 @@ err:
 ZMS_EXPORT void
 zms_virtual_object_destroy(struct zms_virtual_object *virtual_object)
 {
+  zms_signal_emit(&virtual_object->destroy_signal, NULL);
+
   zgn_virtual_object_destroy(virtual_object->proxy);
   free(virtual_object);
 }

@@ -46,6 +46,51 @@ void glm_versor_to_wl_array(versor v, struct wl_array *array);
 
 int zms_log(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
+struct zms_listener;
+
+typedef void (*zms_notify_func_t)(struct zms_listener *listener, void *data);
+
+struct zms_listener {
+  struct wl_list link;
+  zms_notify_func_t notify;
+};
+
+struct zms_signal {
+  struct wl_list listener_list;
+};
+
+static inline void
+zms_signal_init(struct zms_signal *signal)
+{
+  wl_list_init(&signal->listener_list);
+}
+
+static inline void
+zms_signal_add(struct zms_signal *signal, struct zms_listener *listener)
+{
+  wl_list_insert(signal->listener_list.prev, &listener->link);
+}
+
+static inline struct zms_listener *
+zms_signal_get(struct zms_signal *signal, zms_notify_func_t notify)
+{
+  struct zms_listener *l;
+
+  wl_list_for_each(
+      l, &signal->listener_list, link) if (l->notify == notify) return l;
+
+  return NULL;
+}
+
+static inline void
+zms_signal_emit(struct zms_signal *signal, void *data)
+{
+  struct zms_listener *l, *next;
+
+  wl_list_for_each_safe(l, next, &signal->listener_list, link)
+      l->notify(l, data);
+}
+
 #ifdef __cplusplus
 }
 #endif

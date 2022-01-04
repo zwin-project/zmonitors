@@ -109,6 +109,8 @@ zms_output_create(struct zms_compositor* compositor,
     goto err_global;
   }
 
+  priv->user_data = NULL;
+  priv->interface = NULL;
   priv->global = global;
   priv->compositor = compositor;
   priv->size = size;
@@ -120,41 +122,6 @@ zms_output_create(struct zms_compositor* compositor,
 
   output->priv = priv;
   wl_list_insert(&compositor->priv->output_list, &output->link);
-
-  {
-    // FIXME: fill real contents
-    struct zms_bgra* data = mmap(NULL, fd_size, PROT_WRITE, MAP_SHARED, fd, 0);
-    float rands[100];
-    size_t i = 0;
-    for (int j = 0; j < 100; j++)
-      rands[j] = (float)rand() * UINT8_MAX / RAND_MAX;
-
-    for (int y = 0; y < size.height; y++) {
-      for (int x = 0; x < size.width; x++) {
-        int dx = (x % 100) - 50;
-        int dy = (y % 100) - 50;
-        int index = x / 100 + (y / 100) * 17;
-        int distance = dx * dx + dy * dy;
-        data[i].a = UINT8_MAX;
-        if (1600 < distance && distance < 2500) {
-          data[i].r = rands[(index) % 100];
-          data[i].g = rands[(index + 1) % 100];
-          data[i].b = rands[(index + 2) % 100];
-        } else if ((1500 < distance && distance < 1600) ||
-                   (2500 < distance && distance < 2600)) {
-          data[i].r = (rands[(index) % 100] + UINT8_MAX) / 2;
-          data[i].g = (rands[(index + 1) % 100] + UINT8_MAX) / 2;
-          data[i].b = (rands[(index + 2) % 100] + UINT8_MAX) / 2;
-        } else {
-          data[i].r = UINT8_MAX;
-          data[i].g = UINT8_MAX;
-          data[i].b = UINT8_MAX;
-        }
-        i++;
-      }
-    }
-    munmap(data, fd_size);
-  }
 
   return output;
 
@@ -190,6 +157,67 @@ zms_output_destroy(struct zms_output* output)
   free(output->priv->manufacturer);
   free(output->priv);
   free(output);
+}
+
+ZMS_EXPORT void
+zms_output_set_implementation(struct zms_output* output, void* user_data,
+    const struct zms_output_interface* interface)
+{
+  output->priv->user_data = user_data;
+  output->priv->interface = interface;
+}
+
+ZMS_EXPORT void
+zms_output_frame(struct zms_output* output, uint32_t time)
+{
+  static float rands[100];
+  static int rands_initialzed = 0;
+  if (!rands_initialzed) {
+    for (int j = 0; j < 100; j++)
+      rands[j] = (float)rand() * UINT8_MAX / RAND_MAX;
+    rands_initialzed = 1;
+  }
+
+  // FIXME: send frame
+
+  // FIXME: fill real contents
+  struct zms_screen_size size = output->priv->size;
+  size_t fd_size = size.width * size.height * sizeof(struct zms_bgra);
+  struct zms_bgra* data =
+      mmap(NULL, fd_size, PROT_WRITE, MAP_SHARED, output->priv->fd, 0);
+  size_t i = 0;
+
+  for (int y = 0; y < size.height; y++) {
+    for (int x = 0; x < size.width; x++) {
+      int dx = (x % 100) - 50;
+      int dy = (y % 100) - 50;
+      int index = x / 100 + (y / 100) * 17;
+      int distance = dx * dx + dy * dy;
+      data[i].a = UINT8_MAX;
+      if (1600 < distance && distance < 2500) {
+        data[i].r = rands[(index) % 100];
+        data[i].g = rands[(index + 1) % 100];
+        data[i].b = rands[(index + 2) % 100];
+      } else if ((1500 < distance && distance < 1600) ||
+                 (2500 < distance && distance < 2600)) {
+        data[i].r = (rands[(index) % 100] + UINT8_MAX) / 2;
+        data[i].g = (rands[(index + 1) % 100] + UINT8_MAX) / 2;
+        data[i].b = (rands[(index + 2) % 100] + UINT8_MAX) / 2;
+      } else {
+        int32_t val = (time / 10) % (UINT8_MAX * 2) - UINT8_MAX;
+        val = val > 0 ? val : -val;
+        data[i].r = (val + UINT8_MAX * 2) / 3;
+        data[i].g = (val + UINT8_MAX * 2) / 3;
+        data[i].b = UINT8_MAX;
+      }
+      i++;
+    }
+  }
+  munmap(data, fd_size);
+
+  // FIXME: don't do this
+  if (output->priv->interface)
+    output->priv->interface->schedule_repaint(output->priv->user_data, output);
 }
 
 ZMS_EXPORT int

@@ -46,7 +46,7 @@ ui_setup(struct zms_ui_base* ui_base)
   vertex_buffer =
       zms_opengl_vertex_buffer_create(backend, sizeof(struct vertex_buffer));
 
-  output_fd = zms_output_get_fd(screen->monitor->output);
+  output_fd = zms_output_get_fd(screen->output);
 
   texture = zms_opengl_texture_create_by_fd(
       backend, output_fd, screen->monitor->screen_size);
@@ -92,9 +92,41 @@ ui_teardown(struct zms_ui_base* ui_base)
   screen->shader = NULL;
 }
 
+static void
+ui_repaint(struct zms_ui_base* ui_base)
+{
+  struct zms_screen* screen = ui_base->user_data;
+  if (screen->texture_changed) {
+    zms_opengl_component_texture_updated(screen->component);
+    screen->texture_changed = false;
+  }
+}
+
+static void
+ui_frame(struct zms_ui_base* ui_base, uint32_t time)
+{
+  struct zms_screen* screen = ui_base->user_data;
+  zms_output_frame(screen->output, time);
+}
+
 static const struct zms_ui_base_interface ui_base_interface = {
     .setup = ui_setup,
     .teardown = ui_teardown,
+    .repaint = ui_repaint,
+    .frame = ui_frame,
+};
+
+static void
+schedule_output_repainting(void* data, struct zms_output* output)
+{
+  Z_UNUSED(output);
+  struct zms_screen* screen = data;
+  screen->texture_changed = true;
+  zms_ui_base_schedule_repaint(screen->base);
+}
+
+static const struct zms_output_interface output_interface = {
+    .schedule_repaint = schedule_output_repainting,
 };
 
 ZMS_EXPORT struct zms_screen*
@@ -102,7 +134,9 @@ zms_screen_create(struct zms_monitor* monitor)
 {
   struct zms_screen* screen;
   struct zms_ui_base* base;
-  struct zms_ui_base* parent = zms_ui_root_get_base(monitor->ui_root);
+  struct zms_output* output;
+  struct zms_ui_base* parent = monitor->ui_root->base;
+  vec2 physical_size;
 
   screen = zalloc(sizeof *screen);
   if (screen == NULL) goto err;
@@ -110,11 +144,23 @@ zms_screen_create(struct zms_monitor* monitor)
   base = zms_ui_base_create(screen, &ui_base_interface, parent);
   if (base == NULL) goto err_base;
 
+  physical_size[0] = (float)monitor->screen_size.width / 2 / monitor->ppm;
+  physical_size[1] = (float)monitor->screen_size.height / 2 / monitor->ppm;
+  output = zms_output_create(monitor->compositor, monitor->screen_size,
+      physical_size, "zmonitors", "virtual monitor");
+  if (output == NULL) goto err_output;
+  zms_output_set_implementation(output, screen, &output_interface);
+
   screen->base = base;
   screen->monitor = monitor;
-  screen->shader = NULL;
+  screen->output = output;
+
+  screen->texture_changed = false;
 
   return screen;
+
+err_output:
+  zms_ui_base_destroy(base);
 
 err_base:
   free(screen);
@@ -126,6 +172,7 @@ err:
 ZMS_EXPORT void
 zms_screen_destroy(struct zms_screen* screen)
 {
+  zms_output_destroy(screen->output);
   zms_ui_base_destroy(screen->base);
   free(screen);
 }

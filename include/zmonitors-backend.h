@@ -107,6 +107,9 @@ void zms_opengl_component_attach_shader_program(
 void zms_opengl_component_attach_texture(
     struct zms_opengl_component* component, struct zms_opengl_texture* texture);
 
+void zms_opengl_component_texture_updated(
+    struct zms_opengl_component* component);
+
 void zms_opengl_component_set_min(
     struct zms_opengl_component* component, uint32_t min);
 
@@ -119,5 +122,22 @@ void zms_opengl_component_set_topology(
 void zms_opengl_component_add_vertex_attribute(
     struct zms_opengl_component* component, uint32_t index, uint32_t size,
     uint32_t type, uint32_t normalized, uint32_t stride, uint32_t pointer);
+
+/* frame callback */
+
+struct zms_frame_callback_private;
+
+struct zms_frame_callback {
+  struct zms_frame_callback_private* priv;
+  struct wl_list link;  // removed from the list when destroyed
+};
+
+typedef void (*zms_frame_callback_func_t)(void* data, uint32_t time);
+
+struct zms_frame_callback* zms_frame_callback_create(
+    struct zms_virtual_object* virtual_object, void* data,
+    zms_frame_callback_func_t callback_func);
+
+void zms_frame_callback_destroy(struct zms_frame_callback* frame_callback);
 
 #endif  //  ZMONITORS_BACKEND_H

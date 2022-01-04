@@ -30,6 +30,7 @@ zms_opengl_component_create(struct zms_virtual_object* virtual_object)
 
   priv->proxy = proxy;
   wl_proxy_set_user_data((struct wl_proxy*)proxy, component);
+  priv->texture = NULL;
 
   component->priv = priv;
 
@@ -76,6 +77,16 @@ zms_opengl_component_attach_texture(
     struct zms_opengl_component* component, struct zms_opengl_texture* texture)
 {
   zgn_opengl_component_attach_texture(component->priv->proxy, texture->proxy);
+  component->priv->texture = texture;
+}
+
+ZMS_EXPORT void
+zms_opengl_component_texture_updated(struct zms_opengl_component* component)
+{
+  if (component->priv->texture == NULL) return;
+  zms_opengl_texture_buffer_updated(component->priv->texture);
+  zgn_opengl_component_attach_texture(
+      component->priv->proxy, component->priv->texture->proxy);
 }
 
 ZMS_EXPORT void

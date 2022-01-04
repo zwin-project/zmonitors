@@ -6,6 +6,9 @@
 #include "compositor.h"
 
 struct zms_output_private {
+  void* user_data;
+  const struct zms_output_interface* interface;
+
   struct wl_global* global;
   struct zms_compositor* compositor;
 

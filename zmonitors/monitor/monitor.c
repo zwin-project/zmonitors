@@ -24,14 +24,23 @@ ui_setup(struct zms_ui_base* ui_base)
 }
 
 static void
-ui_teardown(struct zms_ui_base* ui_base)
+ui_noop(struct zms_ui_base* ui_base)
 {
   Z_UNUSED(ui_base);
 }
 
+static void
+ui_frame(struct zms_ui_base* ui_base, uint32_t time)
+{
+  Z_UNUSED(ui_base);
+  Z_UNUSED(time);
+}
+
 static const struct zms_ui_base_interface ui_base_interface = {
     .setup = ui_setup,
-    .teardown = ui_teardown,
+    .teardown = ui_noop,
+    .repaint = ui_noop,
+    .frame = ui_frame,
 };
 
 ZMS_EXPORT struct zms_monitor*
@@ -39,19 +48,14 @@ zms_monitor_create(struct zms_backend* backend,
     struct zms_compositor* compositor, struct zms_screen_size size)
 {
   struct zms_monitor* monitor;
-  struct zms_output* output;
   struct zms_ui_root* ui_root;
   struct zms_screen* screen;
   float ppm = DEFAULT_PPM;
   vec3 half_size;
-  vec2 screen_size;
   versor quaternion = GLM_QUAT_IDENTITY_INIT;
 
-  screen_size[0] = (float)size.width / 2 / ppm;
-  screen_size[1] = (float)size.height / 2 / ppm;
-
-  half_size[0] = screen_size[0] + CUBOID_PADDING;
-  half_size[1] = screen_size[1] + CUBOID_PADDING;
+  half_size[0] = (float)size.width / 2 / ppm + CUBOID_PADDING;
+  half_size[1] = (float)size.height / 2 / ppm + CUBOID_PADDING;
   half_size[2] = CUBOID_DEPTH;
 
   monitor = zalloc(sizeof *monitor);
@@ -60,17 +64,12 @@ zms_monitor_create(struct zms_backend* backend,
     goto err;
   }
 
-  output = zms_output_create(
-      compositor, size, screen_size, "zmonitors", "virtual monitor");
-  if (output == NULL) goto err_output;
-
   ui_root = zms_ui_root_create(
       monitor, &ui_base_interface, backend, half_size, quaternion);
   if (ui_root == NULL) goto err_ui_root;
 
   monitor->backend = backend;
   monitor->compositor = compositor;
-  monitor->output = output;
   monitor->screen_size = size;
   monitor->ppm = ppm;
   monitor->ui_root = ui_root;
@@ -85,9 +84,6 @@ err_screen:
   zms_ui_root_destroy(ui_root);
 
 err_ui_root:
-  zms_output_destroy(output);
-
-err_output:
   free(monitor);
 
 err:
@@ -99,6 +95,5 @@ zms_monitor_destroy(struct zms_monitor* monitor)
 {
   zms_screen_destroy(monitor->screen);
   zms_ui_root_destroy(monitor->ui_root);
-  zms_output_destroy(monitor->output);
   free(monitor);
 }
