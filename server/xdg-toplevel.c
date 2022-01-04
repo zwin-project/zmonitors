@@ -273,10 +273,14 @@ zms_xdg_toplevel_create(
 
   toplevel->resource = resource;
   toplevel->xdg_surface = xdg_surface;
+  if (zms_surface_set_role(xdg_surface->surface, SURFACE_ROLE_XDG_TOPLEVEL,
+          xdg_surface->resource, XDG_WM_BASE_ERROR_ROLE) < 0)
+    goto err_role;
+  xdg_surface->surface->role_object = toplevel;
 
   wl_list_init(&toplevel->config_list);
 
-  // toplevel->pending initalized by zalloc
+  // toplevel->pending was initalized by zalloc
 
   toplevel->surface_commit_listener.notify = surface_commit_signal_handler;
   wl_signal_add(
@@ -291,6 +295,7 @@ zms_xdg_toplevel_create(
 
   return toplevel;
 
+err_role:
 err_resource:
   free(toplevel);
 
@@ -309,6 +314,7 @@ zms_xdg_toplevel_destroy(struct zms_xdg_toplevel *toplevel)
     free(config);
   }
 
+  toplevel->xdg_surface->surface->role_object = NULL;
   wl_list_remove(&toplevel->surface_commit_listener.link);
   wl_list_remove(&toplevel->xdg_surface_destroy_listener.link);
   free(toplevel);

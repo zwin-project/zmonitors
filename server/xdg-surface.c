@@ -120,7 +120,6 @@ zms_xdg_surface_create(
   wl_resource_set_implementation(resource, &zms_xdg_surface_interface,
       xdg_surface, zms_xdg_surface_handle_destroy);
 
-  surface->role = SURFACE_ROLE_XDG_SURFACE;
   xdg_surface->resource = resource;
   xdg_surface->surface = surface;
   xdg_surface->surface_destroy_listener.notify = surface_destroy_signal_handler;

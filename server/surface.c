@@ -180,6 +180,7 @@ zms_surface_create(
   surface->resource = resource;
   surface->compositor = compositor;
   surface->view = view;
+  surface->role_object = NULL;
   surface->role = SURFACE_ROLE_NONE;
   wl_signal_init(&surface->commit_signal);
   wl_signal_init(&surface->destroy_signal);
@@ -202,4 +203,37 @@ zms_surface_destroy(struct zms_surface *surface)
   wl_signal_emit(&surface->destroy_signal, NULL);
   zms_view_destroy(surface->view);
   free(surface);
+}
+
+static const char *
+role_to_role_name(enum zms_surface_role role)
+{
+  switch (role) {
+    case SURFACE_ROLE_NONE:
+      return "none";
+
+    case SURFACE_ROLE_XDG_POPUP:
+      return "xdg_popup";
+
+    case SURFACE_ROLE_XDG_TOPLEVEL:
+      return "xdg_toplevel";
+  }
+  assert(false && "not reached");
+}
+
+ZMS_EXPORT int
+zms_surface_set_role(struct zms_surface *surface, enum zms_surface_role role,
+    struct wl_resource *error_resource, uint32_t error_code)
+{
+  if (surface->role == SURFACE_ROLE_NONE || surface->role == role) {
+    surface->role = role;
+    return 0;
+  }
+
+  wl_resource_post_error(error_resource, error_code,
+      "Cannot assign role %s to wl_surface@%d, already had role %s\n",
+      role_to_role_name(role), wl_resource_get_id(surface->resource),
+      role_to_role_name(surface->role));
+
+  return -1;
 }
