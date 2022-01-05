@@ -9,12 +9,16 @@
 struct zms_view_private {
   struct zms_view* pub;
 
-  /* be careful of its data consistency with zms_view_private.link; nullable */
+  struct zms_surface* surface; /* nonnull */
+
+  /* Be careful of its data consistency with zms_view_private.link.
+   * managed by zms_output. nullable. */
   struct zms_output* output;
-  struct wl_list link; /* must be in the self->output->priv->view_list */
+  /* must be in the self->output->priv->view_list. managed by zms_output. */
+  struct wl_list link;
 };
 
-struct zms_view* zms_view_create(struct zms_compositor* compositor);
+struct zms_view* zms_view_create(struct zms_surface* surface);
 
 void zms_view_destroy(struct zms_view* view);
 

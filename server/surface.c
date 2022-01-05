@@ -162,7 +162,11 @@ zms_surface_create(
     goto err;
   }
 
-  view = zms_view_create(compositor);
+  surface->compositor = compositor;
+  surface->role_object = NULL;
+  surface->role = SURFACE_ROLE_NONE;
+
+  view = zms_view_create(surface);
   if (view == NULL) {
     wl_client_post_no_memory(client);
     goto err_view;
@@ -178,10 +182,7 @@ zms_surface_create(
       resource, &surface_interface, surface, zms_surface_handle_destroy);
 
   surface->resource = resource;
-  surface->compositor = compositor;
   surface->view = view;
-  surface->role_object = NULL;
-  surface->role = SURFACE_ROLE_NONE;
   wl_signal_init(&surface->commit_signal);
   wl_signal_init(&surface->destroy_signal);
 

@@ -231,16 +231,15 @@ zms_output_get_fd(struct zms_output* output)
 ZMS_EXPORT void
 zms_output_add_view(struct zms_output* output, struct zms_view* view)
 {
-  if (view->priv->output) zms_output_remove_view(view);
+  if (view->priv->output) zms_output_remove_view(view->priv->output, view);
   view->priv->output = output;
   wl_list_insert(&output->priv->view_list, &view->priv->link);
 }
 
 ZMS_EXPORT void
-zms_output_remove_view(struct zms_view* view)
+zms_output_remove_view(struct zms_output* output, struct zms_view* view)
 {
-  struct zms_output* output = view->priv->output;
-  Z_UNUSED(output);
+  assert(output == view->priv->output);
 
   view->priv->output = NULL;
   wl_list_remove(&view->priv->link);
