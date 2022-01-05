@@ -17,6 +17,19 @@ zms_surface_handle_destroy(struct wl_resource *resource)
 }
 
 static void
+zms_surface_pending_buffer_destroy_handler(
+    struct wl_listener *listener, void *data)
+{
+  struct zms_surface *surface;
+
+  surface = wl_container_of(listener, surface, pending_buffer_destroy_listener);
+
+  surface->pending.buffer_resource = NULL;
+  surface->pending.newly_attached = false;
+  wl_list_init(&surface->pending_buffer_destroy_listener.link);
+}
+
+static void
 zms_surface_protocol_destroy(
     struct wl_client *client, struct wl_resource *resource)
 {
@@ -26,16 +39,24 @@ zms_surface_protocol_destroy(
 
 static void
 zms_surface_protocol_attach(struct wl_client *client,
-    struct wl_resource *resource, struct wl_resource *buffer, int32_t x,
-    int32_t y)
+    struct wl_resource *resource, struct wl_resource *buffer /* nullable */,
+    int32_t x, int32_t y)
 {
-  // TODO:
-  zms_log("request not implemented yet: wl_surface.attach\n");
-  Z_UNUSED(client);
-  Z_UNUSED(resource);
-  Z_UNUSED(buffer);
+  // TODO: handle x and y args;
   Z_UNUSED(x);
   Z_UNUSED(y);
+  Z_UNUSED(client);
+  struct zms_surface *surface = wl_resource_get_user_data(resource);
+
+  if (surface->pending.buffer_resource)
+    wl_list_remove(&surface->pending_buffer_destroy_listener.link);
+
+  if (buffer)
+    wl_resource_add_destroy_listener(
+        buffer, &surface->pending_buffer_destroy_listener);
+
+  surface->pending.newly_attached = true;
+  surface->pending.buffer_resource = buffer;
 }
 
 static void
@@ -183,8 +204,13 @@ zms_surface_create(
 
   surface->resource = resource;
   surface->view = view;
+  surface->pending.buffer_resource = NULL;
+  surface->pending.newly_attached = false;
   wl_signal_init(&surface->commit_signal);
   wl_signal_init(&surface->destroy_signal);
+
+  surface->pending_buffer_destroy_listener.notify =
+      zms_surface_pending_buffer_destroy_handler;
 
   return surface;
 
@@ -201,6 +227,8 @@ err:
 static void
 zms_surface_destroy(struct zms_surface *surface)
 {
+  if (surface->pending.buffer_resource)
+    wl_list_remove(&surface->pending_buffer_destroy_listener.link);
   wl_signal_emit(&surface->destroy_signal, NULL);
   zms_view_destroy(surface->view);
   free(surface);

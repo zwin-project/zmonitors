@@ -8,6 +8,8 @@
 #include "string.h"
 #include "view.h"
 
+static void draw(struct zms_output* output);
+
 static void
 zms_output_protocol_release(
     struct wl_client* client, struct wl_resource* resource)
@@ -125,6 +127,8 @@ zms_output_create(struct zms_compositor* compositor,
   output->priv = priv;
   wl_list_insert(&compositor->priv->output_list, &output->link);
 
+  draw(output);
+
   return output;
 
 err_global:
@@ -172,6 +176,50 @@ zms_output_set_implementation(struct zms_output* output, void* user_data,
 ZMS_EXPORT void
 zms_output_frame(struct zms_output* output, uint32_t time)
 {
+  // FIXME: send frame
+  Z_UNUSED(time);
+  Z_UNUSED(output);
+}
+
+ZMS_EXPORT int
+zms_output_get_fd(struct zms_output* output)
+{
+  return output->priv->fd;
+}
+
+ZMS_EXPORT void
+zms_output_map_view(struct zms_output* output, struct zms_view* view)
+{
+  if (view->priv->output) zms_output_unmap_view(view->priv->output, view);
+  view->priv->output = output;
+  wl_list_insert(output->priv->view_list.prev, &view->priv->link);
+  view->priv->origin[0] = (output->priv->size.width - view->priv->width) / 2;
+  view->priv->origin[1] = (output->priv->size.height - view->priv->height) / 2;
+
+  draw(output);
+
+  if (output->priv->interface)
+    output->priv->interface->schedule_repaint(output->priv->user_data, output);
+}
+
+ZMS_EXPORT void
+zms_output_unmap_view(struct zms_output* output, struct zms_view* view)
+{
+  assert(output == view->priv->output);
+
+  view->priv->output = NULL;
+  wl_list_remove(&view->priv->link);
+  wl_list_init(&view->priv->link);
+
+  draw(output);
+
+  if (output->priv->interface)
+    output->priv->interface->schedule_repaint(output->priv->user_data, output);
+}
+
+static void
+draw(struct zms_output* output)
+{
   static float rands[100];
   static int rands_initialzed = 0;
   if (!rands_initialzed) {
@@ -180,14 +228,13 @@ zms_output_frame(struct zms_output* output, uint32_t time)
     rands_initialzed = 1;
   }
 
-  // FIXME: send frame
-
-  // FIXME: fill real contents
+  size_t i = 0;
+  struct zms_view_private* view_priv;
+  struct zms_view* view;
   struct zms_screen_size size = output->priv->size;
   size_t fd_size = size.width * size.height * sizeof(struct zms_bgra);
   struct zms_bgra* data =
       mmap(NULL, fd_size, PROT_WRITE, MAP_SHARED, output->priv->fd, 0);
-  size_t i = 0;
 
   for (int y = 0; y < size.height; y++) {
     for (int x = 0; x < size.width; x++) {
@@ -206,42 +253,27 @@ zms_output_frame(struct zms_output* output, uint32_t time)
         data[i].g = (rands[(index + 1) % 100] + UINT8_MAX) / 2;
         data[i].b = (rands[(index + 2) % 100] + UINT8_MAX) / 2;
       } else {
-        int32_t val = (time / 10) % (UINT8_MAX * 2) - UINT8_MAX;
-        val = val > 0 ? val : -val;
-        data[i].r = (val + UINT8_MAX * 2) / 3;
-        data[i].g = (val + UINT8_MAX * 2) / 3;
+        data[i].r = UINT8_MAX;
+        data[i].g = UINT8_MAX;
         data[i].b = UINT8_MAX;
       }
       i++;
     }
   }
+
+  wl_list_for_each(view_priv, &output->priv->view_list, link)
+  {
+    view = view_priv->pub;
+    int32_t origin_x = view->priv->origin[0];
+    int32_t origin_y = view->priv->origin[1];
+    for (int32_t y = origin_y;
+         y < MIN(size.height, origin_y + view->priv->height); y++) {
+      memcpy(data + origin_x + y * size.width,
+          view->priv->buffer + (y - origin_y) * view->priv->width,
+          MIN(view->priv->stride,
+              (int32_t)sizeof(struct zms_bgra) * (size.width - origin_x)));
+    }
+  }
+
   munmap(data, fd_size);
-
-  // FIXME: don't do this
-  if (output->priv->interface)
-    output->priv->interface->schedule_repaint(output->priv->user_data, output);
-}
-
-ZMS_EXPORT int
-zms_output_get_fd(struct zms_output* output)
-{
-  return output->priv->fd;
-}
-
-ZMS_EXPORT void
-zms_output_add_view(struct zms_output* output, struct zms_view* view)
-{
-  if (view->priv->output) zms_output_remove_view(view->priv->output, view);
-  view->priv->output = output;
-  wl_list_insert(&output->priv->view_list, &view->priv->link);
-}
-
-ZMS_EXPORT void
-zms_output_remove_view(struct zms_output* output, struct zms_view* view)
-{
-  assert(output == view->priv->output);
-
-  view->priv->output = NULL;
-  wl_list_remove(&view->priv->link);
-  wl_list_init(&view->priv->link);
 }

@@ -23,7 +23,7 @@ struct zms_output_private {
   struct wl_list view_list;
 };
 
-void zms_output_add_view(struct zms_output* output, struct zms_view* view);
+void zms_output_map_view(struct zms_output* output, struct zms_view* view);
 
-void zms_output_remove_view(struct zms_output* output, struct zms_view* view);
+void zms_output_unmap_view(struct zms_output* output, struct zms_view* view);
 #endif  //  ZMONITORS_SERVER_OUTPUT_H

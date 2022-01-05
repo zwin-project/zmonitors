@@ -3,6 +3,8 @@
 #include <xdg-shell-server-protocol.h>
 #include <zmonitors-server.h>
 
+#include "output.h"
+
 static void zms_xdg_toplevel_destroy(struct zms_xdg_toplevel *toplevel);
 
 static void
@@ -224,10 +226,13 @@ static void
 surface_commit_signal_handler(struct wl_listener *listener, void *data)
 {
   Z_UNUSED(data);
-
   struct zms_xdg_toplevel *toplevel;
+  struct zms_surface *surface;
+  struct zms_view *view;
 
   toplevel = wl_container_of(listener, toplevel, surface_commit_listener);
+  surface = toplevel->xdg_surface->surface;
+  view = surface->view;
 
   if (!toplevel->committed) {
     toplevel->committed = true;
@@ -235,6 +240,24 @@ surface_commit_signal_handler(struct wl_listener *listener, void *data)
     zms_xdg_toplevel_send_configure(toplevel);
     return;
   }
+
+  if (surface->pending.newly_attached == false) return;
+
+  zms_view_commit(view);
+
+  if (zms_view_has_buffer(view) && zms_view_is_mapped(view) == false) {
+    struct zms_output *primary_output =
+        zms_compositor_get_primary_output(surface->compositor);
+    zms_output_map_view(primary_output, surface->view);
+  } else if (zms_view_has_buffer(view) && zms_view_is_mapped(view)) {
+    // TODO: update view
+  } else if (zms_view_has_buffer(view) == false && zms_view_is_mapped(view)) {
+    zms_output_unmap_view(surface->view->priv->output, surface->view);
+  }
+
+  wl_buffer_send_release(surface->pending.buffer_resource);
+  surface->pending.buffer_resource = NULL;
+  surface->pending.newly_attached = false;
 }
 
 static void

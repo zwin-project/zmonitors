@@ -1,6 +1,7 @@
 #ifndef ZMONITORS_SERVER_SURFACE_H
 #define ZMONITORS_SERVER_SURFACE_H
 
+#include <stdbool.h>
 #include <wayland-server.h>
 #include <zmonitors-server.h>
 
@@ -17,7 +18,12 @@ struct zms_surface {
   struct wl_resource *resource;
 
   struct zms_compositor *compositor;
-  struct zms_view *view;
+  struct zms_view *view; /* nonnull */
+
+  struct {
+    bool newly_attached;
+    struct wl_resource *buffer_resource; /* nullable */
+  } pending;
 
   /* nullable
    * for example when a role object was once created and then destroyed */
@@ -27,6 +33,9 @@ struct zms_surface {
   // signals
   struct wl_signal commit_signal;
   struct wl_signal destroy_signal;
+
+  // listeners
+  struct wl_listener pending_buffer_destroy_listener;
 };
 
 struct zms_surface *zms_surface_create(

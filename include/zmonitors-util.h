@@ -28,6 +28,14 @@ extern "C" {
 #define Z_UNUSED(x) ((void)x)
 #endif
 
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
 static inline void *
 zalloc(size_t size)
 {
