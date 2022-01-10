@@ -273,6 +273,7 @@ ZMS_EXPORT void
 zms_output_unmap_view(struct zms_output* output, struct zms_view* view)
 {
   assert(output == view->priv->output);
+  if (zms_view_is_mapped(view) == false) return;
 
   view->priv->output = NULL;
   wl_list_remove(&view->priv->link);
