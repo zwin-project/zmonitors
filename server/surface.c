@@ -2,6 +2,7 @@
 
 #include <zmonitors-server.h>
 
+#include "frame-callback.h"
 #include "view.h"
 
 static void zms_surface_destroy(struct zms_surface *surface);
@@ -20,6 +21,7 @@ static void
 zms_surface_pending_buffer_destroy_handler(
     struct wl_listener *listener, void *data)
 {
+  Z_UNUSED(data);
   struct zms_surface *surface;
 
   surface = wl_container_of(listener, surface, pending_buffer_destroy_listener);
@@ -75,14 +77,17 @@ zms_surface_protocol_damage(struct wl_client *client,
 }
 
 static void
-zms_surface_protocol_frame(
-    struct wl_client *client, struct wl_resource *resource, uint32_t callback)
+zms_surface_protocol_frame(struct wl_client *client,
+    struct wl_resource *resource, uint32_t callback_id)
 {
-  // TODO:
-  zms_log("request not implemented yet: wl_surface.frame\n");
-  Z_UNUSED(client);
-  Z_UNUSED(resource);
-  Z_UNUSED(callback);
+  struct zms_surface *surface;
+  struct zms_server_frame_callback *frame_callback;
+
+  surface = wl_resource_get_user_data(resource);
+
+  frame_callback = zms_server_frame_callback_create(client, callback_id);
+  wl_list_insert(
+      surface->pending.frame_callback_list.prev, &frame_callback->link);
 }
 
 static void
@@ -115,6 +120,10 @@ zms_surface_protocol_commit(
   struct zms_surface *surface;
 
   surface = wl_resource_get_user_data(resource);
+
+  wl_list_insert_list(
+      &surface->frame_callback_list, &surface->pending.frame_callback_list);
+  wl_list_init(&surface->pending.frame_callback_list);
 
   wl_signal_emit(&surface->commit_signal, NULL);
 }
@@ -206,6 +215,8 @@ zms_surface_create(
   surface->view = view;
   surface->pending.buffer_resource = NULL;
   surface->pending.newly_attached = false;
+  wl_list_init(&surface->pending.frame_callback_list);
+  wl_list_init(&surface->frame_callback_list);
   wl_signal_init(&surface->commit_signal);
   wl_signal_init(&surface->destroy_signal);
 
@@ -227,6 +238,15 @@ err:
 static void
 zms_surface_destroy(struct zms_surface *surface)
 {
+  struct zms_server_frame_callback *frame_callback, *tmp;
+
+  wl_list_for_each_safe(
+      frame_callback, tmp, &surface->pending.frame_callback_list, link)
+      wl_resource_destroy(frame_callback->resource);
+
+  wl_list_for_each_safe(frame_callback, tmp, &surface->frame_callback_list,
+      link) wl_resource_destroy(frame_callback->resource);
+
   if (surface->pending.buffer_resource)
     wl_list_remove(&surface->pending_buffer_destroy_listener.link);
   wl_signal_emit(&surface->destroy_signal, NULL);
@@ -265,4 +285,28 @@ zms_surface_set_role(struct zms_surface *surface, enum zms_surface_role role,
       role_to_role_name(surface->role));
 
   return -1;
+}
+
+ZMS_EXPORT void
+zms_surface_send_frame_done(struct zms_surface *surface, uint32_t time)
+{
+  struct zms_server_frame_callback *frame_callback, *tmp;
+
+  wl_list_for_each_safe(
+      frame_callback, tmp, &surface->frame_callback_list, link)
+  {
+    wl_callback_send_done(frame_callback->resource, time);
+    wl_resource_destroy(frame_callback->resource);
+  }
+  wl_client_flush(wl_resource_get_client(surface->resource));
+}
+
+ZMS_EXPORT void
+zms_surface_clear_pending_buffer(struct zms_surface *surface)
+{
+  if (surface->pending.buffer_resource)
+    wl_list_remove(&surface->pending_buffer_destroy_listener.link);
+
+  surface->pending.buffer_resource = NULL;
+  surface->pending.newly_attached = false;
 }

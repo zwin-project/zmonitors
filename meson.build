@@ -20,6 +20,7 @@ dep_wayland_protocols = dependency('wayland-protocols')
 dep_wayland_scanner = dependency('wayland-scanner', version: '>= 1.14.91')
 dep_zgn_protocol = dependency('zigen-protocols')
 dep_cglm = dependency('cglm')
+dep_m = meson.get_compiler('c').find_library('m')
 
 prog_python = import('python').find_installation('python3')
 files_textify_py = files('tools/textify.py')

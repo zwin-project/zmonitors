@@ -23,7 +23,11 @@ struct zms_surface {
   struct {
     bool newly_attached;
     struct wl_resource *buffer_resource; /* nullable */
+
+    struct wl_list frame_callback_list;  // <- zms_frame_callback
   } pending;
+
+  struct wl_list frame_callback_list;  // <- zms_frame_callback
 
   /* nullable
    * for example when a role object was once created and then destroyed */
@@ -44,5 +48,9 @@ struct zms_surface *zms_surface_create(
 int zms_surface_set_role(struct zms_surface *surface,
     enum zms_surface_role role, struct wl_resource *error_resource,
     uint32_t error_code);
+
+void zms_surface_send_frame_done(struct zms_surface *surface, uint32_t time);
+
+void zms_surface_clear_pending_buffer(struct zms_surface *surface);
 
 #endif  //  ZMONITORS_SERVER_SURFACE_H

@@ -119,4 +119,5 @@ zms_ui_root_commit(struct zms_ui_root* root)
   wl_list_insert(&root->frame_callback_list, &frame_callback->link);
 
   zms_cuboid_window_commit(root->cuboid_window);
+  zms_backend_flush(root->cuboid_window->backend);
 }

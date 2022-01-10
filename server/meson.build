@@ -1,10 +1,12 @@
 deps_zmonitors_server = [
+  dep_m,
   dep_wayland_server,
   dep_zmonitors_util,
 ]
 
 srcs_zmonitors_server = [
   'compositor.c',
+  'frame-callback.c',
   'output.c',
   'region.c',
   'seat.c',

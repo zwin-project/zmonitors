@@ -84,8 +84,8 @@ zms_app_create()
 
   loop = wl_display_get_event_loop(compositor->display);
   backend_fd = zms_backend_get_fd(backend);
-  backend_event_source = wl_event_loop_add_fd(loop, backend_fd,
-      WL_EVENT_READABLE | WL_EVENT_WRITABLE, handle_backend_event, app);
+  backend_event_source = wl_event_loop_add_fd(
+      loop, backend_fd, WL_EVENT_READABLE, handle_backend_event, app);
 
   if (backend_event_source == NULL) {
     zms_log("failed to create a event source\n");
@@ -138,5 +138,6 @@ zms_app_destroy(struct zms_app* app)
 ZMS_EXPORT void
 zms_app_run(struct zms_app* app)
 {
+  zms_backend_flush(app->backend);
   wl_display_run(app->compositor->display);
 }
