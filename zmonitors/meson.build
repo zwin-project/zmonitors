@@ -14,6 +14,8 @@ deps_zmonitors = [
 srcs_zmonitors = [
   'app.c',
   'main.c',
+  'seat.c',
+  zigen_client_protocol_h,
 ]
 
 executable(

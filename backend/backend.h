@@ -9,6 +9,9 @@
 #include "zmonitors-backend.h"
 
 struct zms_backend {
+  void* uer_data;
+  const struct zms_backend_interface* interface; /* nonnull */
+
   struct wl_display* display;
 
   /* globals */

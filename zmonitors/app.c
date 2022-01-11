@@ -3,6 +3,11 @@
 #include <signal.h>
 
 #include "monitor.h"
+#include "seat.h"
+
+static const struct zms_backend_interface backend_interface = {
+    .seat_capabilities = zms_app_seat_capabilities,  // seat.c
+};
 
 static int
 handle_backend_event(int fd, uint32_t mask, void* data)
@@ -65,11 +70,14 @@ zms_app_create()
     goto err_compositor;
   }
 
-  backend = zms_backend_create();
+  backend = zms_backend_create(app, &backend_interface);
   if (backend == NULL) {
     zms_log("failed to create a zms_backend\n");
     goto err_backend;
   }
+
+  app->compositor = compositor;
+  app->backend = backend;
 
   if (zms_backend_connect(backend, "zigen-0") == false) {
     zms_log("failed to connect zigen server\n");
@@ -81,6 +89,7 @@ zms_app_create()
     zms_log("failed to create a primary monitor\n");
     goto err_monitor;
   }
+  app->primary_monitor = primary_monitor;
 
   loop = wl_display_get_event_loop(compositor->display);
   backend_fd = zms_backend_get_fd(backend);
@@ -91,6 +100,7 @@ zms_app_create()
     zms_log("failed to create a event source\n");
     goto err_event_source;
   }
+  app->backend_event_source = backend_event_source;
 
   signals[0] = wl_event_loop_add_signal(loop, SIGTERM, on_term_signal, app);
   signals[1] = wl_event_loop_add_signal(loop, SIGINT, on_term_signal, app);
@@ -100,11 +110,6 @@ zms_app_create()
     zms_log("failed to create singal event sources\n");
     goto err_signal;
   }
-
-  app->compositor = compositor;
-  app->backend = backend;
-  app->backend_event_source = backend_event_source;
-  app->primary_monitor = primary_monitor;
 
   return app;
 

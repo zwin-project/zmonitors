@@ -11,6 +11,8 @@ struct zms_app {
   struct zms_backend* backend;
   struct wl_event_source* backend_event_source;
   struct zms_monitor* primary_monitor;
+
+  struct zms_ray* ray; /* nullable */
 };
 
 struct zms_app* zms_app_create();

@@ -13,6 +13,7 @@ srcs_zmonitors_backend = [
   'opengl-shader-program.c',
   'opengl-texture.c',
   'opengl-vertex-buffer.c',
+  'ray.c',
   'virtual-object.c',
   zigen_protocol_c,
   zigen_client_protocol_h,

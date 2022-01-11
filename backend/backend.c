@@ -12,11 +12,10 @@
 static void
 seat_capabilities(void* data, struct zgn_seat* seat, uint32_t capability)
 {
-  // TODO:
-  zms_log("event not implemented yet: zgn_seat.capabilities\n");
-  Z_UNUSED(data);
   Z_UNUSED(seat);
-  Z_UNUSED(capability);
+  struct zms_backend* backend = data;
+
+  backend->interface->seat_capabilities(backend->uer_data, capability);
 }
 
 static const struct zgn_seat_listener seat_listener = {
@@ -77,7 +76,8 @@ static const struct wl_registry_listener registry_listener = {
 };
 
 ZMS_EXPORT struct zms_backend*
-zms_backend_create()
+zms_backend_create(
+    void* user_data, const struct zms_backend_interface* interface)
 {
   struct zms_backend* backend;
 
@@ -88,6 +88,8 @@ zms_backend_create()
   }
 
   backend->display = NULL;
+  backend->uer_data = user_data;
+  backend->interface = interface;
 
   return backend;
 

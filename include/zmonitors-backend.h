@@ -9,7 +9,12 @@
 
 struct zms_backend;
 
-struct zms_backend* zms_backend_create();
+struct zms_backend_interface {
+  void (*seat_capabilities)(void* data, uint32_t capabilities);
+};
+
+struct zms_backend* zms_backend_create(
+    void* user_data, const struct zms_backend_interface* interface);
 
 void zms_backend_destroy(struct zms_backend* backend);
 
@@ -139,5 +144,24 @@ struct zms_frame_callback* zms_frame_callback_create(
     zms_frame_callback_func_t callback_func);
 
 void zms_frame_callback_destroy(struct zms_frame_callback* frame_callback);
+
+/* ray */
+
+struct zms_ray;
+
+struct zms_ray_interface {
+  void (*enter)(void* data, uint32_t serial,
+      struct zms_virtual_object* virtual_object, vec3 origin, vec3 direction);
+  void (*leave)(
+      void* data, uint32_t serial, struct zms_virtual_object* virtual_object);
+  void (*motion)(void* data, uint32_t time, vec3 origin, vec3 direction);
+  void (*button)(void* data, uint32_t serial, uint32_t time, uint32_t button,
+      uint32_t state);
+};
+
+struct zms_ray* zms_ray_create(struct zms_backend* backend, void* user_data,
+    const struct zms_ray_interface* interface);
+
+void zms_ray_destroy(struct zms_ray* ray);
 
 #endif  //  ZMONITORS_BACKEND_H
