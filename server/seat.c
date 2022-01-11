@@ -8,11 +8,14 @@ static void
 zms_seat_protocol_get_pointer(
     struct wl_client* client, struct wl_resource* resource, uint32_t id)
 {
-  // TODO:
-  zms_log("request not implemented yet: wl_seat.get_pointer\n");
-  Z_UNUSED(client);
-  Z_UNUSED(resource);
-  Z_UNUSED(id);
+  struct zms_seat* seat = wl_resource_get_user_data(resource);
+  struct zms_pointer* pointer = seat->priv->pointer;
+
+  if (pointer) {
+    zms_pointer_resource_create(pointer, client, id);
+  } else {
+    zms_pointer_inert_resource_create(client, id);
+  }
 }
 
 static void
