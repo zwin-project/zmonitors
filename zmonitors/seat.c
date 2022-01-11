@@ -1,6 +1,7 @@
 #include "seat.h"
 
 #include <zigen-client-protocol.h>
+#include <zmonitors-backend.h>
 #include <zmonitors-util.h>
 
 #include "app.h"
@@ -62,12 +63,12 @@ zms_app_seat_capabilities(void* data, uint32_t capabilities)
   struct zms_app* app = data;
   if (capabilities & ZGN_SEAT_CAPABILITY_RAY && app->ray == NULL) {
     app->ray = zms_ray_create(app->backend, app, &ray_interface);
+    zms_seat_init_pointer(app->compositor->seat);
   }
 
   if (!(capabilities & ZGN_SEAT_CAPABILITY_RAY) && app->ray) {
     zms_ray_destroy(app->ray);
     app->ray = NULL;
+    zms_seat_release_pointer(app->compositor->seat);
   }
-
-  // TODO: notify the capability change
 }

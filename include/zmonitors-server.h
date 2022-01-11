@@ -18,6 +18,10 @@ struct zms_seat {
   struct zms_seat_private *priv;
 };
 
+void zms_seat_init_pointer(struct zms_seat *seat);
+
+void zms_seat_release_pointer(struct zms_seat *seat);
+
 /* output */
 
 struct zms_output;

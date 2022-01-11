@@ -53,17 +53,17 @@ static const struct wl_seat_interface seat_interface = {
 };
 
 static void
-zms_seat_send_capabilities(struct zms_seat* seat, struct wl_client* client)
+zms_seat_send_capabilities(
+    struct zms_seat* seat, struct wl_client* client /* nullable */)
 {
   struct wl_resource* resource;
   uint32_t capabilities = 0;
 
-  // TODO: check caps
-  capabilities |= WL_SEAT_CAPABILITY_POINTER;
+  if (seat->priv->pointer) capabilities |= WL_SEAT_CAPABILITY_POINTER;
 
   wl_resource_for_each(resource, &seat->priv->resource_list)
   {
-    if (wl_resource_get_client(resource) == client)
+    if (client == NULL || wl_resource_get_client(resource) == client)
       wl_seat_send_capabilities(resource, capabilities);
   }
 }
@@ -156,4 +156,22 @@ zms_seat_destroy(struct zms_seat* seat)
   wl_global_destroy(seat->priv->global);
   free(seat->priv);
   free(seat);
+}
+
+ZMS_EXPORT void
+zms_seat_init_pointer(struct zms_seat* seat)
+{
+  if (seat->priv->pointer) return;
+
+  seat->priv->pointer = zms_pointer_create();
+  zms_seat_send_capabilities(seat, NULL);
+}
+
+ZMS_EXPORT void
+zms_seat_release_pointer(struct zms_seat* seat)
+{
+  if (seat->priv->pointer == NULL) return;
+  zms_pointer_destroy(seat->priv->pointer);
+  seat->priv->pointer = NULL;
+  zms_seat_send_capabilities(seat, NULL);
 }
