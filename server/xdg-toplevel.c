@@ -243,19 +243,19 @@ surface_commit_signal_handler(struct wl_listener *listener, void *data)
 
   if (surface->pending.newly_attached == false) return;
 
-  zms_view_commit(view);
-
-  if (zms_view_has_buffer(view) && zms_view_is_mapped(view) == false) {
+  if (surface->pending.buffer && zms_view_is_mapped(view) == false) {
+    zms_view_commit(view);
     struct zms_output *primary_output =
         zms_compositor_get_primary_output(surface->compositor);
     zms_output_map_view(primary_output, surface->view);
-  } else if (zms_view_has_buffer(view) && zms_view_is_mapped(view)) {
+  } else if (surface->pending.buffer && zms_view_is_mapped(view)) {
+    zms_view_commit(view);
     zms_output_update_view(view->priv->output, view);
-  } else if (zms_view_has_buffer(view) == false && zms_view_is_mapped(view)) {
+  } else if (surface->pending.buffer == NULL && zms_view_is_mapped(view)) {
     zms_output_unmap_view(surface->view->priv->output, surface->view);
+    zms_view_commit(view);
   }
 
-  wl_buffer_send_release(surface->pending.buffer_resource);
   zms_surface_clear_pending_buffer(surface);
 }
 

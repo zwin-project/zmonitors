@@ -6,11 +6,12 @@
 
 #include "compositor.h"
 #include "math.h"
+#include "pixman-helper.h"
 #include "string.h"
 #include "surface.h"
 #include "view.h"
 
-static void render(struct zms_output* output);
+static void render(struct zms_output* output, pixman_region32_t* damage);
 
 static void
 draw_background(struct zms_bgra* bg, struct zms_screen_size size)
@@ -124,7 +125,8 @@ zms_output_create(struct zms_compositor* compositor,
   struct wl_global* global;
   int fd;
   size_t buffer_size;
-  struct zms_bgra *buffer, *background_image;
+  struct zms_bgra *buffer, *bg_buffer;
+  pixman_image_t *image, *bg_image;
 
   output = zalloc(sizeof *output);
   if (output == NULL) {
@@ -151,12 +153,22 @@ zms_output_create(struct zms_compositor* compositor,
     goto err_mmap;
   }
 
-  background_image = malloc(buffer_size);
-  if (background_image == NULL) {
+  image = pixman_image_create_bits(PIXMAN_a8r8g8b8, size.width, size.height,
+      (uint32_t*)buffer, size.width * sizeof(struct zms_bgra));
+  if (image == NULL) {
+    zms_log("failed to create pixman image\n");
+    goto err_image;
+  }
+
+  bg_buffer = malloc(buffer_size);
+  if (bg_buffer == NULL) {
     zms_log("failed to allocate memory\n");
     goto err_bg;
   }
-  draw_background(background_image, size);
+  draw_background(bg_buffer, size);
+
+  bg_image = pixman_image_create_bits(PIXMAN_a8r8g8b8, size.width, size.height,
+      (uint32_t*)bg_buffer, size.width * sizeof(struct zms_bgra));
 
   global = wl_global_create(
       compositor->display, &wl_output_interface, 3, output, zms_output_bind);
@@ -175,22 +187,27 @@ zms_output_create(struct zms_compositor* compositor,
   priv->model = strdup(model);
   priv->fd = fd;
   priv->buffer = buffer;
+  priv->image = image;
+  pixman_region32_init_rect(&priv->region, 0, 0, size.width, size.height);
   wl_list_init(&priv->resource_list);
   wl_list_init(&priv->view_list);
+  priv->bg_buffer = bg_buffer;
+  priv->bg_image = bg_image;
 
   output->priv = priv;
   wl_list_insert(&compositor->priv->output_list, &output->link);
 
-  output->priv->background_image = background_image;
-
-  render(output);
+  render(output, &output->priv->region);
 
   return output;
 
 err_global:
-  free(background_image);
+  free(bg_buffer);
 
 err_bg:
+  pixman_image_unref(image);
+
+err_image:
   munmap(buffer, buffer_size);
 
 err_mmap:
@@ -224,8 +241,9 @@ zms_output_destroy(struct zms_output* output)
 
   wl_list_remove(&output->link);
   wl_global_destroy(output->priv->global);
+  pixman_image_unref(output->priv->image);
   close(output->priv->fd);
-  free(output->priv->background_image);
+  free(output->priv->bg_buffer);
   free(output->priv->model);
   free(output->priv->manufacturer);
   free(output->priv);
@@ -257,13 +275,22 @@ zms_output_get_fd(struct zms_output* output)
 ZMS_EXPORT void
 zms_output_map_view(struct zms_output* output, struct zms_view* view)
 {
+  pixman_region32_t damage;
+
   if (view->priv->output) zms_output_unmap_view(view->priv->output, view);
+
   view->priv->output = output;
   wl_list_insert(output->priv->view_list.prev, &view->priv->link);
-  view->priv->origin[0] = (output->priv->size.width - view->priv->width) / 2;
-  view->priv->origin[1] = (output->priv->size.height - view->priv->height) / 2;
 
-  render(output);
+  zms_view_set_origin(view,
+      (output->priv->size.width - zms_view_get_width(view)) / 2,
+      (output->priv->size.height - zms_view_get_height(view)) / 2);
+
+  pixman_region32_init_view_global(&damage, view);
+
+  render(output, &damage);
+
+  pixman_region32_fini(&damage);
 
   if (output->priv->interface)
     output->priv->interface->schedule_repaint(output->priv->user_data, output);
@@ -273,13 +300,19 @@ ZMS_EXPORT void
 zms_output_unmap_view(struct zms_output* output, struct zms_view* view)
 {
   assert(output == view->priv->output);
+  pixman_region32_t damage;
+
   if (zms_view_is_mapped(view) == false) return;
 
   view->priv->output = NULL;
   wl_list_remove(&view->priv->link);
   wl_list_init(&view->priv->link);
 
-  render(output);
+  pixman_region32_init_view_global(&damage, view);
+
+  render(output, &damage);
+
+  pixman_region32_fini(&damage);
 
   if (output->priv->interface)
     output->priv->interface->schedule_repaint(output->priv->user_data, output);
@@ -289,34 +322,60 @@ ZMS_EXPORT void
 zms_output_update_view(struct zms_output* output, struct zms_view* view)
 {
   assert(output == view->priv->output);
+  pixman_region32_t damage;
 
-  render(output);
+  pixman_region32_init_view_global(&damage, view);
+
+  render(output, &damage);
+
+  pixman_region32_fini(&damage);
 
   if (output->priv->interface)
     output->priv->interface->schedule_repaint(output->priv->user_data, output);
 }
 
 static void
-render(struct zms_output* output)
+render(struct zms_output* output, pixman_region32_t* damage)
 {
   struct zms_view_private* view_priv;
   struct zms_view* view;
   struct zms_screen_size size = output->priv->size;
-  size_t buf_size = size.width * size.height * sizeof(struct zms_bgra);
 
-  memcpy(output->priv->buffer, output->priv->background_image, buf_size);
+  pixman_image_set_clip_region32(output->priv->image, damage);
+
+  pixman_image_composite32(PIXMAN_OP_SRC, output->priv->bg_image, NULL,
+      output->priv->image, 0, 0, 0, 0, 0, 0, size.width, size.height);
+
+  pixman_image_set_clip_region32(output->priv->image, NULL);
 
   wl_list_for_each(view_priv, &output->priv->view_list, link)
   {
+    pixman_region32_t view_region, repaint_region;
+    pixman_transform_t transform;
     view = view_priv->pub;
-    int32_t origin_x = view->priv->origin[0];
-    int32_t origin_y = view->priv->origin[1];
-    for (int32_t y = origin_y;
-         y < MIN(size.height, origin_y + view->priv->height); y++) {
-      memcpy(output->priv->buffer + origin_x + y * size.width,
-          view->priv->buffer + (y - origin_y) * view->priv->width,
-          MIN(view->priv->stride,
-              (int32_t)sizeof(struct zms_bgra) * (size.width - origin_x)));
-    }
+
+    pixman_region32_init_view_global(&view_region, view);
+    pixman_region32_init(&repaint_region);
+    pixman_region32_intersect(&repaint_region, damage, &view_region);
+
+    pixman_transform_init_view_global(&transform, view);
+
+    pixman_image_set_clip_region32(output->priv->image, &repaint_region);
+
+    pixman_image_set_transform(view->priv->image, &transform);
+
+    wl_shm_buffer_begin_access(
+        wl_shm_buffer_get(view->priv->buffer_ref.buffer->resource));
+
+    pixman_image_composite32(PIXMAN_OP_OVER, view->priv->image, NULL,
+        output->priv->image, 0, 0, 0, 0, 0, 0, size.width, size.height);
+
+    wl_shm_buffer_end_access(
+        wl_shm_buffer_get(view->priv->buffer_ref.buffer->resource));
+
+    pixman_image_set_clip_region32(output->priv->image, NULL);
+
+    pixman_region32_fini(&view_region);
+    pixman_region32_fini(&repaint_region);
   }
 }

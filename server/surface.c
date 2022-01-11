@@ -2,6 +2,7 @@
 
 #include <zmonitors-server.h>
 
+#include "buffer.h"
 #include "frame-callback.h"
 #include "view.h"
 
@@ -26,7 +27,7 @@ zms_surface_pending_buffer_destroy_handler(
 
   surface = wl_container_of(listener, surface, pending_buffer_destroy_listener);
 
-  surface->pending.buffer_resource = NULL;
+  surface->pending.buffer = NULL;
   surface->pending.newly_attached = false;
   wl_list_init(&surface->pending_buffer_destroy_listener.link);
 }
@@ -41,8 +42,8 @@ zms_surface_protocol_destroy(
 
 static void
 zms_surface_protocol_attach(struct wl_client *client,
-    struct wl_resource *resource, struct wl_resource *buffer /* nullable */,
-    int32_t x, int32_t y)
+    struct wl_resource *resource,
+    struct wl_resource *buffer_resource /* nullable */, int32_t x, int32_t y)
 {
   // TODO: handle x and y args;
   Z_UNUSED(x);
@@ -50,15 +51,18 @@ zms_surface_protocol_attach(struct wl_client *client,
   Z_UNUSED(client);
   struct zms_surface *surface = wl_resource_get_user_data(resource);
 
-  if (surface->pending.buffer_resource)
+  if (surface->pending.buffer)
     wl_list_remove(&surface->pending_buffer_destroy_listener.link);
 
-  if (buffer)
-    wl_resource_add_destroy_listener(
-        buffer, &surface->pending_buffer_destroy_listener);
+  if (buffer_resource) {
+    surface->pending.buffer = zms_buffer_create_from_resource(buffer_resource);
+    wl_signal_add(&surface->pending.buffer->destroy_signal,
+        &surface->pending_buffer_destroy_listener);
+  } else {
+    surface->pending.buffer = NULL;
+  }
 
   surface->pending.newly_attached = true;
-  surface->pending.buffer_resource = buffer;
 }
 
 static void
@@ -213,7 +217,7 @@ zms_surface_create(
 
   surface->resource = resource;
   surface->view = view;
-  surface->pending.buffer_resource = NULL;
+  surface->pending.buffer = NULL;
   surface->pending.newly_attached = false;
   wl_list_init(&surface->pending.frame_callback_list);
   wl_list_init(&surface->frame_callback_list);
@@ -247,7 +251,7 @@ zms_surface_destroy(struct zms_surface *surface)
   wl_list_for_each_safe(frame_callback, tmp, &surface->frame_callback_list,
       link) wl_resource_destroy(frame_callback->resource);
 
-  if (surface->pending.buffer_resource)
+  if (surface->pending.buffer)
     wl_list_remove(&surface->pending_buffer_destroy_listener.link);
   wl_signal_emit(&surface->destroy_signal, NULL);
   zms_view_destroy(surface->view);
@@ -304,9 +308,9 @@ zms_surface_send_frame_done(struct zms_surface *surface, uint32_t time)
 ZMS_EXPORT void
 zms_surface_clear_pending_buffer(struct zms_surface *surface)
 {
-  if (surface->pending.buffer_resource)
+  if (surface->pending.buffer)
     wl_list_remove(&surface->pending_buffer_destroy_listener.link);
 
-  surface->pending.buffer_resource = NULL;
+  surface->pending.buffer = NULL;
   surface->pending.newly_attached = false;
 }

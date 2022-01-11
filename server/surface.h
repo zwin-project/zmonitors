@@ -5,6 +5,7 @@
 #include <wayland-server.h>
 #include <zmonitors-server.h>
 
+#include "buffer.h"
 #include "compositor.h"
 #include "view.h"
 
@@ -22,7 +23,7 @@ struct zms_surface {
 
   struct {
     bool newly_attached;
-    struct wl_resource *buffer_resource; /* nullable */
+    struct zms_buffer *buffer; /* nullable */
 
     struct wl_list frame_callback_list;  // <- zms_frame_callback
   } pending;
