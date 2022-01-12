@@ -5,8 +5,25 @@
 #include "monitor.h"
 #include "seat.h"
 
+static void
+zms_app_gain_ray_cap(void* data)
+{
+  struct zms_app* app = data;
+
+  zms_seat_init_pointer(app->compositor->seat);
+}
+
+static void
+zms_app_lose_ray_cap(void* data)
+{
+  struct zms_app* app = data;
+
+  zms_seat_release_pointer(app->compositor->seat);
+}
+
 static const struct zms_backend_interface backend_interface = {
-    .seat_capabilities = zms_app_seat_capabilities,  // seat.c
+    .gain_ray_capability = zms_app_gain_ray_cap,
+    .lose_ray_capability = zms_app_lose_ray_cap,
 };
 
 static int

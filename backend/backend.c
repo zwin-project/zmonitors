@@ -7,6 +7,7 @@
 #include <zigen-shell-client-protocol.h>
 #include <zmonitors-util.h>
 
+#include "ray.h"
 #include "zmonitors-backend.h"
 
 static void
@@ -15,7 +16,16 @@ seat_capabilities(void* data, struct zgn_seat* seat, uint32_t capability)
   Z_UNUSED(seat);
   struct zms_backend* backend = data;
 
-  backend->interface->seat_capabilities(backend->uer_data, capability);
+  if (capability & ZGN_SEAT_CAPABILITY_RAY && backend->ray == NULL) {
+    backend->ray = zms_ray_create(backend);
+    backend->interface->gain_ray_capability(backend->uer_data);
+  }
+
+  if (!(capability & ZGN_SEAT_CAPABILITY_RAY) && backend->ray) {
+    zms_ray_destroy(backend->ray);
+    backend->ray = NULL;
+    backend->interface->lose_ray_capability(backend->uer_data);
+  }
 }
 
 static const struct zgn_seat_listener seat_listener = {

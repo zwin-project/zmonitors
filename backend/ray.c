@@ -5,44 +5,66 @@
 #include "backend.h"
 
 static void
-zms_ray_protocol_enter(void* data, struct zgn_ray* ray, uint32_t serial,
-    struct zgn_virtual_object* virtual_object, struct wl_array* origin,
+zms_ray_protocol_enter(void* data, struct zgn_ray* zgn_ray, uint32_t serial,
+    struct zgn_virtual_object* zgn_virtual_object, struct wl_array* origin,
     struct wl_array* direction)
 {
-  Z_UNUSED(data);
+  Z_UNUSED(zgn_ray);
+  struct zms_ray* ray = data;
+  struct zms_virtual_object* virtual_object;
+  vec3 origin_vec, direction_vec;
+
+  glm_vec3_from_wl_array(origin_vec, origin);
+  glm_vec3_from_wl_array(direction_vec, direction);
+  virtual_object = wl_proxy_get_user_data((struct wl_proxy*)zgn_virtual_object);
+
+  // TODO: notify via virtual object interface
   Z_UNUSED(ray);
-  Z_UNUSED(serial);
   Z_UNUSED(virtual_object);
-  Z_UNUSED(origin);
-  Z_UNUSED(direction);
+  Z_UNUSED(origin_vec);
+  Z_UNUSED(direction_vec);
+  Z_UNUSED(serial);
 }
 
 static void
-zms_ray_protocol_leave(void* data, struct zgn_ray* ray, uint32_t serial,
-    struct zgn_virtual_object* virtual_object)
+zms_ray_protocol_leave(void* data, struct zgn_ray* zgn_ray, uint32_t serial,
+    struct zgn_virtual_object* zgn_virtual_object)
 {
-  Z_UNUSED(data);
+  Z_UNUSED(zgn_ray);
+  struct zms_ray* ray = data;
+  struct zms_virtual_object* virtual_object;
+
+  virtual_object = wl_proxy_get_user_data((struct wl_proxy*)zgn_virtual_object);
+  // TODO: notify via virtual object interface
   Z_UNUSED(ray);
-  Z_UNUSED(serial);
   Z_UNUSED(virtual_object);
+  Z_UNUSED(serial);
 }
 
 static void
-zms_ray_protocol_motion(void* data, struct zgn_ray* ray, uint32_t time,
+zms_ray_protocol_motion(void* data, struct zgn_ray* zgn_ray, uint32_t time,
     struct wl_array* origin, struct wl_array* direction)
 {
-  Z_UNUSED(data);
+  Z_UNUSED(zgn_ray);
+  struct zms_ray* ray = data;
+  vec3 origin_vec, direction_vec;
+
+  glm_vec3_from_wl_array(origin_vec, origin);
+  glm_vec3_from_wl_array(direction_vec, direction);
+  // TODO: notify via virtual object interface
   Z_UNUSED(ray);
+  Z_UNUSED(origin_vec);
+  Z_UNUSED(direction_vec);
   Z_UNUSED(time);
-  Z_UNUSED(origin);
-  Z_UNUSED(direction);
 }
 
 static void
-zms_ray_protocol_button(void* data, struct zgn_ray* ray, uint32_t serial,
+zms_ray_protocol_button(void* data, struct zgn_ray* zgn_ray, uint32_t serial,
     uint32_t time, uint32_t button, uint32_t state)
 {
-  Z_UNUSED(data);
+  Z_UNUSED(zgn_ray);
+  struct zms_ray* ray = data;
+  // TODO: notify via virtual object interface
   Z_UNUSED(ray);
   Z_UNUSED(serial);
   Z_UNUSED(time);
@@ -58,8 +80,7 @@ static const struct zgn_ray_listener ray_listener = {
 };
 
 ZMS_EXPORT struct zms_ray*
-zms_ray_create(struct zms_backend* backend, void* user_data,
-    const struct zms_ray_interface* interface)
+zms_ray_create(struct zms_backend* backend)
 {
   struct zms_ray* ray;
   struct zgn_ray* proxy;
@@ -72,8 +93,6 @@ zms_ray_create(struct zms_backend* backend, void* user_data,
 
   zgn_ray_add_listener(proxy, &ray_listener, ray);
 
-  ray->user_data = user_data;
-  ray->interface = interface;
   ray->proxy = proxy;
 
   return ray;

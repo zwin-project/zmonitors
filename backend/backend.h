@@ -20,6 +20,8 @@ struct zms_backend {
   struct zgn_shell* shell;
   struct wl_shm* shm;
   struct zgn_opengl* opengl;
+
+  struct zms_ray* ray; /* nullable */
 };
 
 #endif  //  ZMONITORS_BACKEND_BACKEND_H
