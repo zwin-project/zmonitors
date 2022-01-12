@@ -79,3 +79,15 @@ zms_opengl_shader_program_destroy(struct zms_opengl_shader_program* program)
   zgn_opengl_shader_program_destroy(program->proxy);
   free(program);
 }
+
+ZMS_EXPORT void
+zms_opengl_shader_program_set_uniform_variable_mat4(
+    struct zms_opengl_shader_program* program, const char* location, mat4 mat)
+{
+  struct wl_array array;
+  wl_array_init(&array);
+  glm_mat4_to_wl_array(mat, &array);
+  zgn_opengl_shader_program_set_uniform_float_matrix(
+      program->proxy, location, 4, 4, false, 1, &array);
+  wl_array_release(&array);
+}

@@ -12,6 +12,9 @@
 #define DEFAULT_PPM 1000
 #define CUBOID_DEPTH 0.01
 #define CUBOID_PADDING 0.05
+#define CONTROL_BAR_PADDING 0.02
+#define CONTROL_BAR_HEIGHT 0.02
+#define CONTROL_BAR_WIDTH 0.4
 
 static void
 ui_setup(struct zms_ui_base* ui_base)
@@ -20,7 +23,16 @@ ui_setup(struct zms_ui_base* ui_base)
 
   glm_vec3_copy(ui_base->half_size, monitor->screen->base->half_size);
   monitor->screen->base->half_size[0] -= CUBOID_PADDING;
-  monitor->screen->base->half_size[1] -= CUBOID_PADDING;
+  monitor->screen->base->half_size[1] -=
+      CUBOID_PADDING + (CONTROL_BAR_HEIGHT + CONTROL_BAR_PADDING) / 2;
+  monitor->screen->base->position[1] =
+      (CONTROL_BAR_HEIGHT + CONTROL_BAR_PADDING) / 2;
+
+  monitor->control_bar->base->half_size[0] = CONTROL_BAR_WIDTH / 2;
+  monitor->control_bar->base->half_size[1] = CONTROL_BAR_HEIGHT / 2;
+
+  monitor->control_bar->base->position[1] =
+      -ui_base->half_size[1] + CUBOID_PADDING + CONTROL_BAR_HEIGHT / 2;
 }
 
 static void
@@ -41,12 +53,14 @@ zms_monitor_create(struct zms_backend* backend,
   struct zms_monitor* monitor;
   struct zms_ui_root* ui_root;
   struct zms_screen* screen;
+  struct zms_control_bar* control_bar;
   float ppm = DEFAULT_PPM;
   vec3 half_size;
   versor quaternion = GLM_QUAT_IDENTITY_INIT;
 
   half_size[0] = (float)size.width / 2 / ppm + CUBOID_PADDING;
-  half_size[1] = (float)size.height / 2 / ppm + CUBOID_PADDING;
+  half_size[1] = (float)size.height / 2 / ppm + CUBOID_PADDING +
+                 (CONTROL_BAR_HEIGHT + CONTROL_BAR_PADDING) / 2;
   half_size[2] = CUBOID_DEPTH;
 
   monitor = zalloc(sizeof *monitor);
@@ -69,7 +83,14 @@ zms_monitor_create(struct zms_backend* backend,
   if (screen == NULL) goto err_screen;
   monitor->screen = screen;
 
+  control_bar = zms_control_bar_create(monitor);
+  if (control_bar == NULL) goto err_control_bar;
+  monitor->control_bar = control_bar;
+
   return monitor;
+
+err_control_bar:
+  zms_screen_destroy(screen);
 
 err_screen:
   zms_ui_root_destroy(ui_root);
@@ -84,6 +105,7 @@ err:
 ZMS_EXPORT void
 zms_monitor_destroy(struct zms_monitor* monitor)
 {
+  zms_control_bar_destroy(monitor->control_bar);
   zms_screen_destroy(monitor->screen);
   zms_ui_root_destroy(monitor->ui_root);
   free(monitor);

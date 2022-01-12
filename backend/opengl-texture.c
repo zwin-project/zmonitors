@@ -19,8 +19,12 @@ zms_opengl_texture_create_by_fd(
   proxy = zgn_opengl_create_texture(backend->opengl);
   if (proxy == NULL) goto err_proxy;
 
-  buffer =
-      zms_buffer_create_for_texture_by_fd(backend, fd, size.width, size.height);
+  if (fd <= 0) {
+    buffer = zms_buffer_create_for_texture(backend, size.width, size.height);
+  } else {
+    buffer = zms_buffer_create_for_texture_by_fd(
+        backend, fd, size.width, size.height);
+  }
   if (buffer == NULL) goto err_buffer;
 
   zgn_opengl_texture_attach_2d(proxy, buffer->proxy);
@@ -52,4 +56,10 @@ ZMS_EXPORT void
 zms_opengl_texture_buffer_updated(struct zms_opengl_texture* texture)
 {
   zgn_opengl_texture_attach_2d(texture->proxy, texture->buffer->proxy);
+}
+
+ZMS_EXPORT int
+zms_opengl_texture_get_fd(struct zms_opengl_texture* texture)
+{
+  return texture->buffer->fd;
 }

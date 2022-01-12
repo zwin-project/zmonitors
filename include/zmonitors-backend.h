@@ -80,6 +80,9 @@ struct zms_opengl_shader_program* zms_opengl_shader_program_create(
 void zms_opengl_shader_program_destroy(
     struct zms_opengl_shader_program* program);
 
+void zms_opengl_shader_program_set_uniform_variable_mat4(
+    struct zms_opengl_shader_program* program, const char* location, mat4 mat);
+
 /* opengl vertex buffer*/
 
 struct zms_opengl_vertex_buffer;
@@ -100,7 +103,16 @@ struct zms_opengl_texture;
 struct zms_opengl_texture* zms_opengl_texture_create_by_fd(
     struct zms_backend* backend, int fd, struct zms_screen_size size);
 
+static inline struct zms_opengl_texture*
+zms_opengl_texture_create(
+    struct zms_backend* backend, struct zms_screen_size size)
+{
+  return zms_opengl_texture_create_by_fd(backend, -1, size);
+}
+
 void zms_opengl_texture_destroy(struct zms_opengl_texture* texture);
+
+int zms_opengl_texture_get_fd(struct zms_opengl_texture* texture);
 
 /* opengl component */
 

@@ -18,12 +18,29 @@ screen_fragment_glsl = custom_target(
   output: 'screen-frag.h'
 )
 
+control_bar_vertex_glsl = custom_target(
+  'control-bar-vert.h',
+  command: cmd_textify + [ '-n', 'control_bar_vertex_shader' ],
+  input: 'control-bar.vert',
+  output: 'control-bar-vert.h'
+)
+
+control_bar_fragment_glsl = custom_target(
+  'control-bar-frag.h',
+  command: cmd_textify + [ '-n', 'control_bar_fragment_shader' ],
+  input: 'control-bar.frag',
+  output: 'control-bar-frag.h'
+)
+
 srcs_zms_monitor = [
+  'control-bar.c',
   'monitor.c',
   'screen.c',
-  zigen_opengl_client_protocol_h,
-  screen_vertex_glsl,
+  control_bar_fragment_glsl,
+  control_bar_vertex_glsl,
   screen_fragment_glsl,
+  screen_vertex_glsl,
+  zigen_opengl_client_protocol_h,
 ]
 
 lib_zms_monitor = static_library(

@@ -81,6 +81,21 @@ zms_buffer_create_for_texture_by_fd(
   return zms_buffer_create_by_opened_fd(backend, dup_fd, width, height, stride);
 }
 
+ZMS_EXPORT struct zms_buffer *
+zms_buffer_create_for_texture(
+    struct zms_backend *backend, int32_t width, int32_t height)
+{
+  int fd;
+  int32_t stride;
+
+  stride = width * sizeof(struct zms_bgra);
+
+  fd = zms_util_create_shared_fd(stride * height, "zmonitors-buffer");
+  if (fd < 0) return NULL;
+
+  return zms_buffer_create_by_opened_fd(backend, fd, width, height, stride);
+}
+
 ZMS_EXPORT void
 zms_buffer_destroy(struct zms_buffer *buffer)
 {

@@ -52,6 +52,10 @@ int glm_versor_from_wl_array(versor v, struct wl_array *array);
 
 void glm_versor_to_wl_array(versor v, struct wl_array *array);
 
+int glm_mat4_from_wl_array(mat4 m, struct wl_array *array);
+
+void glm_mat4_to_wl_array(mat4 m, struct wl_array *array);
+
 int zms_log(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
 struct zms_listener;

@@ -1,12 +1,12 @@
 #include "screen.h"
 
+#include <sys/mman.h>
 #include <zigen-opengl-client-protocol.h>
 #include <zmonitors-util.h>
 
 #include "monitor-internal.h"
 #include "screen-frag.h"
 #include "screen-vert.h"
-#include "sys/mman.h"
 
 struct uv {
   float u, v;
@@ -29,7 +29,7 @@ ray_motion(
   Z_UNUSED(ui_base);
   Z_UNUSED(time);
   Z_UNUSED(origin);
-  glm_vec3_print(direction, stderr);
+  Z_UNUSED(direction);
   return true;
 }
 
@@ -42,7 +42,10 @@ ui_setup(struct zms_ui_base* ui_base)
   struct zms_opengl_shader_program* shader;
   struct zms_opengl_vertex_buffer* vertex_buffer;
   struct zms_opengl_texture* texture;
+  mat4 transform;
   int output_fd;
+
+  glm_translate_make(transform, ui_base->position);
 
   component =
       zms_opengl_component_create(ui_base->root->cuboid_window->virtual_object);
@@ -77,6 +80,9 @@ ui_setup(struct zms_ui_base* ui_base)
     munmap(data, sizeof(struct vertex_buffer));
   }
 
+  zms_opengl_shader_program_set_uniform_variable_mat4(
+      shader, "transform", transform);
+
   zms_opengl_component_attach_vertex_buffer(component, vertex_buffer);
   zms_opengl_component_attach_shader_program(component, shader);
   zms_opengl_component_attach_texture(component, texture);
@@ -101,7 +107,6 @@ ui_teardown(struct zms_ui_base* ui_base)
   zms_opengl_vertex_buffer_destroy(screen->vertex_buffer);
   zms_opengl_shader_program_destroy(screen->shader);
   zms_opengl_component_destroy(screen->component);
-  screen->shader = NULL;
 }
 
 static void

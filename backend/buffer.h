@@ -19,6 +19,9 @@ struct zms_buffer *zms_buffer_create(struct zms_backend *backend, size_t size);
 struct zms_buffer *zms_buffer_create_for_texture_by_fd(
     struct zms_backend *backend, int fd, int32_t width, int32_t height);
 
+struct zms_buffer *zms_buffer_create_for_texture(
+    struct zms_backend *backend, int32_t width, int32_t height);
+
 void zms_buffer_destroy(struct zms_buffer *buffer);
 
 #endif  //  ZMONITORS_BACKEND_BUFFER_H
