@@ -33,9 +33,21 @@ int zms_backend_dispatch_pending(struct zms_backend* backend);
 
 struct zms_virtual_object;
 
+struct zms_virtual_object_interface {
+  void (*ray_enter)(void* data, uint32_t serial, vec3 origin, vec3 direction);
+  void (*ray_leave)(void* data, uint32_t serial);
+  void (*ray_motion)(void* data, uint32_t time, vec3 origin, vec3 direction);
+  void (*ray_button)(void* data, uint32_t serial, uint32_t time,
+      uint32_t button, uint32_t state);
+};
+
 /* cuboid window */
 
 struct zms_cuboid_window_private;
+
+struct zms_cuboid_window_interface {
+  const struct zms_virtual_object_interface base;
+};
 
 struct zms_cuboid_window {
   struct zms_cuboid_window_private* priv;
@@ -49,6 +61,7 @@ struct zms_cuboid_window {
 };
 
 struct zms_cuboid_window* zms_cuboid_window_create(void* user_data,
+    const struct zms_cuboid_window_interface* interface,
     struct zms_backend* backend, vec3 half_size, versor quaternion);
 
 void zms_cuboid_window_destroy(struct zms_cuboid_window* cuboid_window);

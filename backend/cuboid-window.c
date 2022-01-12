@@ -39,8 +39,9 @@ static const struct zgn_cuboid_window_listener cuboid_window_listener = {
 };
 
 ZMS_EXPORT struct zms_cuboid_window *
-zms_cuboid_window_create(void *user_data, struct zms_backend *backend,
-    vec3 half_size, versor quaternion)
+zms_cuboid_window_create(void *user_data,
+    const struct zms_cuboid_window_interface *interface,
+    struct zms_backend *backend, vec3 half_size, versor quaternion)
 {
   struct zms_cuboid_window *cuboid_window;
   struct zms_cuboid_window_private *priv;
@@ -53,7 +54,8 @@ zms_cuboid_window_create(void *user_data, struct zms_backend *backend,
   priv = zalloc(sizeof *priv);
   if (priv == NULL) goto err_priv;
 
-  virtual_object = zms_virtual_object_create(backend);
+  virtual_object =
+      zms_virtual_object_create(user_data, &interface->base, backend);
   if (virtual_object == NULL) goto err_virtual_object;
 
   {

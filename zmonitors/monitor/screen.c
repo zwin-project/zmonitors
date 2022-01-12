@@ -21,6 +21,18 @@ struct vertex_buffer {
   struct vertex vertices[4];
 };
 
+static bool
+ray_motion(
+    struct zms_ui_base* ui_base, uint32_t time, vec3 origin, vec3 direction)
+{
+  // TODO: ray - screen intersection
+  Z_UNUSED(ui_base);
+  Z_UNUSED(time);
+  Z_UNUSED(origin);
+  glm_vec3_print(direction, stderr);
+  return true;
+}
+
 static void
 ui_setup(struct zms_ui_base* ui_base)
 {
@@ -114,6 +126,7 @@ static const struct zms_ui_base_interface ui_base_interface = {
     .teardown = ui_teardown,
     .repaint = ui_repaint,
     .frame = ui_frame,
+    .ray_motion = ray_motion,
 };
 
 static void

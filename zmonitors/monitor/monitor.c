@@ -24,23 +24,14 @@ ui_setup(struct zms_ui_base* ui_base)
 }
 
 static void
-ui_noop(struct zms_ui_base* ui_base)
+ui_teardown(struct zms_ui_base* ui_base)
 {
   Z_UNUSED(ui_base);
-}
-
-static void
-ui_frame(struct zms_ui_base* ui_base, uint32_t time)
-{
-  Z_UNUSED(ui_base);
-  Z_UNUSED(time);
 }
 
 static const struct zms_ui_base_interface ui_base_interface = {
     .setup = ui_setup,
-    .teardown = ui_noop,
-    .repaint = ui_noop,
-    .frame = ui_frame,
+    .teardown = ui_teardown,
 };
 
 ZMS_EXPORT struct zms_monitor*

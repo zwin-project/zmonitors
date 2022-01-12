@@ -8,10 +8,18 @@
 struct zms_ui_base;
 
 struct zms_ui_base_interface {
-  void (*setup)(struct zms_ui_base* ui_base);
-  void (*teardown)(struct zms_ui_base* ui_base);
-  void (*repaint)(struct zms_ui_base* ui_base);
-  void (*frame)(struct zms_ui_base* ui_base, uint32_t time);
+  void (*setup)(struct zms_ui_base* ui_base);                /* nonnull */
+  void (*teardown)(struct zms_ui_base* ui_base);             /* nonnull */
+  void (*repaint)(struct zms_ui_base* ui_base);              /* nullable */
+  void (*frame)(struct zms_ui_base* ui_base, uint32_t time); /* nullable */
+  bool (*ray_enter)(struct zms_ui_base* ui_base, uint32_t serial, vec3 origin,
+      vec3 direction); /* nullable */
+  bool (*ray_leave)(
+      struct zms_ui_base* ui_base, uint32_t serial); /* nullable */
+  bool (*ray_motion)(struct zms_ui_base* ui_base, uint32_t time, vec3 origin,
+      vec3 direction); /* nullable */
+  bool (*ray_button)(struct zms_ui_base* ui_base, uint32_t serial,
+      uint32_t time, uint32_t button, uint32_t state); /* nullable */
 };
 
 struct zms_ui_base {

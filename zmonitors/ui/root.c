@@ -8,6 +8,42 @@
 #include "ui.h"
 
 static void
+zms_ui_root_ray_enter(void* data, uint32_t serial, vec3 origin, vec3 direction)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_ray_enter(root->base, serial, origin, direction);
+}
+
+static void
+zms_ui_root_ray_leave(void* data, uint32_t serial)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_ray_leave(root->base, serial);
+}
+
+static void
+zms_ui_root_ray_motion(void* data, uint32_t time, vec3 origin, vec3 direction)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_ray_motion(root->base, time, origin, direction);
+}
+
+static void
+zms_ui_root_ray_button(
+    void* data, uint32_t serial, uint32_t time, uint32_t button, uint32_t state)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_ray_button(root->base, serial, time, button, state);
+}
+
+static const struct zms_cuboid_window_interface cuboid_window_interface = {{
+    .ray_enter = zms_ui_root_ray_enter,
+    .ray_leave = zms_ui_root_ray_leave,
+    .ray_motion = zms_ui_root_ray_motion,
+    .ray_button = zms_ui_root_ray_button,
+}};
+
+static void
 frame_callback_handler(void* data, uint32_t time)
 {
   struct zms_ui_root* root = data;
@@ -67,8 +103,8 @@ zms_ui_root_create(void* user_data,
   root = zalloc(sizeof *root);
   if (root == NULL) goto err;
 
-  cuboid_window =
-      zms_cuboid_window_create(root, backend, half_size, quaternion);
+  cuboid_window = zms_cuboid_window_create(
+      root, &cuboid_window_interface, backend, half_size, quaternion);
   if (cuboid_window == NULL) goto err_cuboid_window;
   cuboid_window->configured = cuboid_window_first_configured_handler;
 

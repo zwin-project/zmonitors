@@ -3,6 +3,20 @@
 #include <zmonitors-util.h>
 
 #include "backend.h"
+#include "virtual-object.h"
+
+static void
+zms_ray_focus_virtual_object_destroy_handler(
+    struct zms_listener* listener, void* data)
+{
+  Z_UNUSED(data);
+  struct zms_ray* ray;
+
+  ray = wl_container_of(listener, ray, focus_virtual_object_destroy_listener);
+
+  ray->focus_virtual_object = NULL;
+  wl_list_remove(&ray->focus_virtual_object_destroy_listener.link);
+}
 
 static void
 zms_ray_protocol_enter(void* data, struct zgn_ray* zgn_ray, uint32_t serial,
@@ -18,12 +32,15 @@ zms_ray_protocol_enter(void* data, struct zgn_ray* zgn_ray, uint32_t serial,
   glm_vec3_from_wl_array(direction_vec, direction);
   virtual_object = wl_proxy_get_user_data((struct wl_proxy*)zgn_virtual_object);
 
-  // TODO: notify via virtual object interface
-  Z_UNUSED(ray);
-  Z_UNUSED(virtual_object);
-  Z_UNUSED(origin_vec);
-  Z_UNUSED(direction_vec);
-  Z_UNUSED(serial);
+  if (ray->focus_virtual_object)
+    wl_list_remove(&ray->focus_virtual_object_destroy_listener.link);
+
+  ray->focus_virtual_object = virtual_object;
+  zms_signal_add(&virtual_object->destroy_signal,
+      &ray->focus_virtual_object_destroy_listener);
+
+  virtual_object->interface->ray_enter(
+      virtual_object->user_data, serial, origin_vec, direction_vec);
 }
 
 static void
@@ -35,10 +52,13 @@ zms_ray_protocol_leave(void* data, struct zgn_ray* zgn_ray, uint32_t serial,
   struct zms_virtual_object* virtual_object;
 
   virtual_object = wl_proxy_get_user_data((struct wl_proxy*)zgn_virtual_object);
-  // TODO: notify via virtual object interface
-  Z_UNUSED(ray);
-  Z_UNUSED(virtual_object);
-  Z_UNUSED(serial);
+
+  if (ray->focus_virtual_object) {
+    wl_list_remove(&ray->focus_virtual_object_destroy_listener.link);
+    ray->focus_virtual_object = NULL;
+  }
+
+  virtual_object->interface->ray_leave(virtual_object->user_data, serial);
 }
 
 static void
@@ -49,13 +69,13 @@ zms_ray_protocol_motion(void* data, struct zgn_ray* zgn_ray, uint32_t time,
   struct zms_ray* ray = data;
   vec3 origin_vec, direction_vec;
 
+  if (ray->focus_virtual_object == NULL) return;
+
   glm_vec3_from_wl_array(origin_vec, origin);
   glm_vec3_from_wl_array(direction_vec, direction);
-  // TODO: notify via virtual object interface
-  Z_UNUSED(ray);
-  Z_UNUSED(origin_vec);
-  Z_UNUSED(direction_vec);
-  Z_UNUSED(time);
+
+  ray->focus_virtual_object->interface->ray_motion(
+      ray->focus_virtual_object->user_data, time, origin_vec, direction_vec);
 }
 
 static void
@@ -64,12 +84,11 @@ zms_ray_protocol_button(void* data, struct zgn_ray* zgn_ray, uint32_t serial,
 {
   Z_UNUSED(zgn_ray);
   struct zms_ray* ray = data;
-  // TODO: notify via virtual object interface
-  Z_UNUSED(ray);
-  Z_UNUSED(serial);
-  Z_UNUSED(time);
-  Z_UNUSED(button);
-  Z_UNUSED(state);
+
+  if (ray->focus_virtual_object == NULL) return;
+
+  ray->focus_virtual_object->interface->ray_button(
+      ray->focus_virtual_object->user_data, serial, time, button, state);
 }
 
 static const struct zgn_ray_listener ray_listener = {
@@ -94,6 +113,8 @@ zms_ray_create(struct zms_backend* backend)
   zgn_ray_add_listener(proxy, &ray_listener, ray);
 
   ray->proxy = proxy;
+  ray->focus_virtual_object_destroy_listener.notify =
+      zms_ray_focus_virtual_object_destroy_handler;
 
   return ray;
 
@@ -107,6 +128,8 @@ err:
 ZMS_EXPORT void
 zms_ray_destroy(struct zms_ray* ray)
 {
+  if (ray->focus_virtual_object)
+    wl_list_remove(&ray->focus_virtual_object_destroy_listener.link);
   zgn_ray_release(ray->proxy);
   free(ray);
 }

@@ -15,4 +15,16 @@ void zms_ui_base_run_repaint_phase(struct zms_ui_base* ui_base);
 
 void zms_ui_base_run_frame_phase(struct zms_ui_base* ui_base, uint32_t time);
 
+bool zms_ui_base_propagate_ray_enter(
+    struct zms_ui_base* ui_base, uint32_t serial, vec3 origin, vec3 direction);
+
+bool zms_ui_base_propagate_ray_leave(
+    struct zms_ui_base* ui_base, uint32_t serial);
+
+bool zms_ui_base_propagate_ray_motion(
+    struct zms_ui_base* ui_base, uint32_t time, vec3 origin, vec3 direction);
+
+bool zms_ui_base_propagate_ray_button(struct zms_ui_base* ui_base,
+    uint32_t serial, uint32_t time, uint32_t button, uint32_t state);
+
 #endif  //  ZMONITORS_UI_BASE_H
