@@ -33,7 +33,6 @@ struct zms_ui_base {
 
   vec3 position;
   vec3 half_size;
-  versor quaternion;
 
   bool setup;
 };

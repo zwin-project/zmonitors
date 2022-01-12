@@ -22,7 +22,6 @@ zms_ui_base_create(void* user_data,
   wl_list_init(&ui_base->children);
   glm_vec3_zero(ui_base->position);
   glm_vec3_zero(ui_base->half_size);
-  glm_quat_identity(ui_base->quaternion);
   ui_base->setup = false;
 
   return ui_base;
@@ -48,7 +47,6 @@ zms_ui_base_create_root(struct zms_ui_root* root, void* user_data,
   wl_list_init(&ui_base->children);
   glm_vec3_zero(ui_base->position);
   glm_vec3_zero(ui_base->half_size);
-  glm_quat_identity(ui_base->quaternion);
   ui_base->setup = false;
 
   return ui_base;
