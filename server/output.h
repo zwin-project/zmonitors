@@ -37,6 +37,6 @@ void zms_output_unmap_view(struct zms_output* output, struct zms_view* view);
 void zms_output_update_view(struct zms_output* output, struct zms_view* view);
 
 struct zms_view* zms_output_pick_view(
-    struct zms_output* output, int x, int y, int* vx, int* vy);
+    struct zms_output* output, float x, float y, float* vx, float* vy);
 
 #endif  //  ZMONITORS_SERVER_OUTPUT_H

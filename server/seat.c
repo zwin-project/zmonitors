@@ -4,18 +4,20 @@
 
 #include "compositor.h"
 #include "output.h"
+#include "pointer-client.h"
 
 static void
 zms_seat_protocol_get_pointer(
     struct wl_client* client, struct wl_resource* resource, uint32_t id)
 {
+  struct zms_pointer_client* pointer_client;
   struct zms_seat* seat = wl_resource_get_user_data(resource);
-  struct zms_pointer* pointer = seat->priv->pointer;
 
-  if (pointer) {
-    zms_pointer_resource_create(pointer, client, id);
+  if (seat->priv->pointer) {
+    pointer_client = zms_pointer_client_ensure(client, seat->priv->pointer);
+    zms_pointer_client_resource_create(pointer_client, client, id);
   } else {
-    zms_pointer_inert_resource_create(client, id);
+    zms_pointer_client_inert_resource_create(client, id);
   }
 }
 
@@ -167,7 +169,7 @@ zms_seat_init_pointer(struct zms_seat* seat)
 {
   if (seat->priv->pointer) return;
 
-  seat->priv->pointer = zms_pointer_create();
+  seat->priv->pointer = zms_pointer_create(seat);
   zms_seat_send_capabilities(seat, NULL);
 }
 
@@ -183,23 +185,41 @@ zms_seat_release_pointer(struct zms_seat* seat)
 ZMS_EXPORT
 void
 zms_seat_notify_pointer_motion_abs(
-    struct zms_seat* seat, struct zms_output* output, vec2 pos)
+    struct zms_seat* seat, struct zms_output* output, vec2 pos, uint32_t time)
 {
-  // TODO:
   Z_UNUSED(seat);
-  int vx, vy;
-  struct zms_view* view;
-  view = zms_output_pick_view(output, pos[0], pos[1], &vx, &vy);
-  Z_UNUSED(view);
+  struct zms_pointer* pointer = seat->priv->pointer;
+
+  if (pointer)
+    pointer->grab->interface->motion_abs(pointer->grab, output, time, pos);
 }
 
 ZMS_EXPORT void
-zms_seat_notify_pointer_button(
-    struct zms_seat* seat, uint32_t time, uint32_t button, uint32_t state)
+zms_seat_notify_pointer_button(struct zms_seat* seat, uint32_t time,
+    uint32_t button, uint32_t state, uint32_t serial)
 {
-  // TODO:
   Z_UNUSED(seat);
-  Z_UNUSED(time);
-  Z_UNUSED(button);
-  Z_UNUSED(state);
+  struct zms_pointer* pointer = seat->priv->pointer;
+
+  if (pointer == NULL) return;
+
+  if (state == WL_POINTER_BUTTON_STATE_PRESSED) {
+    pointer->button_count++;
+  } else if (pointer->button_count > 0) {
+    pointer->button_count--;
+  }
+
+  pointer->grab->interface->button(pointer->grab, time, button, state, serial);
+}
+
+ZMS_EXPORT void
+zms_seat_notify_pointer_leave(struct zms_seat* seat)
+{
+  Z_UNUSED(seat);
+
+  struct zms_pointer* pointer = seat->priv->pointer;
+
+  if (pointer) pointer->grab->interface->cancel(pointer->grab);
+
+  pointer->button_count = 0;
 }

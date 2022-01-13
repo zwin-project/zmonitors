@@ -45,8 +45,6 @@ static bool
 ray_motion(
     struct zms_ui_base* ui_base, uint32_t time, vec3 origin, vec3 direction)
 {
-  // TODO: ray - screen intersection
-  Z_UNUSED(time);
   struct zms_screen* screen = ui_base->user_data;
   vec2 pos;
   float d;
@@ -57,7 +55,7 @@ ray_motion(
     pos[0] *= screen->monitor->screen_size.width;
     pos[1] *= screen->monitor->screen_size.height;
     zms_seat_notify_pointer_motion_abs(
-        screen->monitor->compositor->seat, screen->output, pos);
+        screen->monitor->compositor->seat, screen->output, pos, time);
   } else {
     screen->ray_focus = false;
   }
@@ -71,6 +69,8 @@ ray_leave(struct zms_ui_base* ui_base, uint32_t serial)
   Z_UNUSED(serial);
   struct zms_screen* screen = ui_base->user_data;
 
+  zms_seat_notify_pointer_leave(screen->monitor->compositor->seat);
+
   screen->ray_focus = false;
 
   return true;
@@ -80,12 +80,11 @@ static bool
 ray_button(struct zms_ui_base* ui_base, uint32_t serial, uint32_t time,
     uint32_t button, uint32_t state)
 {
-  Z_UNUSED(serial);
   struct zms_screen* screen = ui_base->user_data;
 
   if (screen->ray_focus) {
     zms_seat_notify_pointer_button(
-        screen->monitor->compositor->seat, time, button, state);
+        screen->monitor->compositor->seat, time, button, state, serial);
   }
 
   return true;

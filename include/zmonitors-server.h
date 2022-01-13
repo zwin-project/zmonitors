@@ -50,10 +50,12 @@ void zms_seat_init_pointer(struct zms_seat *seat);
 void zms_seat_release_pointer(struct zms_seat *seat);
 
 void zms_seat_notify_pointer_motion_abs(
-    struct zms_seat *seat, struct zms_output *output, vec2 pos);
+    struct zms_seat *seat, struct zms_output *output, vec2 pos, uint32_t time);
 
-void zms_seat_notify_pointer_button(
-    struct zms_seat *seat, uint32_t time, uint32_t button, uint32_t state);
+void zms_seat_notify_pointer_button(struct zms_seat *seat, uint32_t time,
+    uint32_t button, uint32_t state, uint32_t serial);
+
+void zms_seat_notify_pointer_leave(struct zms_seat *seat);
 
 /* view */
 
@@ -61,6 +63,9 @@ struct zms_view_private;
 
 struct zms_view {
   struct zms_view_private *priv;
+
+  // signals
+  struct zms_signal destroy_signal;
 };
 
 /* compositor */

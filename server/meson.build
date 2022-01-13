@@ -10,6 +10,7 @@ srcs_zmonitors_server = [
   'compositor.c',
   'frame-callback.c',
   'pointer.c',
+  'pointer-client.c',
   'output.c',
   'region.c',
   'seat.c',

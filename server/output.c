@@ -381,7 +381,8 @@ render(struct zms_output* output, pixman_region32_t* damage)
 }
 
 ZMS_EXPORT struct zms_view*
-zms_output_pick_view(struct zms_output* output, int x, int y, int* vx, int* vy)
+zms_output_pick_view(
+    struct zms_output* output, float x, float y, float* vx, float* vy)
 {
   struct zms_view_private* view_priv;
   struct zms_view* view;

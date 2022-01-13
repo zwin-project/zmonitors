@@ -26,6 +26,7 @@ zms_view_create(struct zms_surface* surface)
   glm_vec2_zero(priv->origin);
 
   view->priv = priv;
+  zms_signal_init(&view->destroy_signal);
 
   return view;
 
@@ -39,6 +40,7 @@ err:
 ZMS_EXPORT void
 zms_view_destroy(struct zms_view* view)
 {
+  zms_signal_emit(&view->destroy_signal, NULL);
   zms_output_unmap_view(view->priv->output, view);
   if (view->priv->image) pixman_image_unref(view->priv->image);
   zms_buffer_reference(&view->priv->buffer_ref, NULL);
@@ -87,18 +89,31 @@ zms_view_set_origin(struct zms_view* view, float x, float y)
 }
 
 ZMS_EXPORT bool
-zms_view_contains(struct zms_view* view, int x, int y, int* vx, int* vy)
+zms_view_contains(struct zms_view* view, float x, float y, float* vx, float* vy)
 {
-  int view_x = x - view->priv->origin[0];
-  int view_y = y - view->priv->origin[1];
+  if (zms_view_is_mapped(view) == false) return false;
 
-  if (0 <= view_x && 0 <= view_y &&
-      (uint32_t)view_x <= zms_view_get_width(view) &&
-      (uint32_t)view_y <= zms_view_get_height(view)) {
+  float view_x = x - view->priv->origin[0];
+  float view_y = y - view->priv->origin[1];
+
+  if (0 <= view_x && 0 <= view_y && view_x <= zms_view_get_width(view) &&
+      view_y <= zms_view_get_height(view)) {
     *vx = view_x;
     *vy = view_y;
     return true;
   }
 
   return false;
+}
+
+ZMS_EXPORT bool
+zms_view_get_local_coord(
+    struct zms_view* view, float x, float y, float* vx, float* vy)
+{
+  if (zms_view_is_mapped(view) == false) return false;
+
+  *vx = x - view->priv->origin[0];
+  *vy = y - view->priv->origin[1];
+
+  return true;
 }

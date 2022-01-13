@@ -6,6 +6,7 @@ srcs_zmonitors_util = [
   'cglm.c',
   'fd.c',
   'log.c',
+  'weak-ref.c',
 ]
 
 user_deps_zmonitors_util = [

@@ -60,6 +60,10 @@ zms_view_get_height(struct zms_view* view)
     return pixman_image_get_height(view->priv->image);
 }
 
-bool zms_view_contains(struct zms_view* view, int x, int y, int* vx, int* vy);
+bool zms_view_contains(
+    struct zms_view* view, float x, float y, float* vx, float* vy);
+
+bool zms_view_get_local_coord(
+    struct zms_view* view, float x, float y, float* vx, float* vy);
 
 #endif  //  ZMONITORS_SERVER_VIEW_H

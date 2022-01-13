@@ -103,6 +103,16 @@ zms_signal_emit(struct zms_signal *signal, void *data)
       l->notify(l, data);
 }
 
+struct zms_weak_ref {
+  void *data;
+  struct zms_listener destroy_listener;
+};
+
+void zms_weak_ref_init(struct zms_weak_ref *ref);
+
+void zms_weak_reference(
+    struct zms_weak_ref *ref, void *data, struct zms_signal *destroy_signal);
+
 #ifdef __cplusplus
 }
 #endif
