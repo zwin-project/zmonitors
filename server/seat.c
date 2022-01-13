@@ -178,3 +178,25 @@ zms_seat_release_pointer(struct zms_seat* seat)
   seat->priv->pointer = NULL;
   zms_seat_send_capabilities(seat, NULL);
 }
+
+ZMS_EXPORT
+void
+zms_seat_notify_pointer_motion_abs(
+    struct zms_seat* seat, struct zms_output* output, vec2 pos)
+{
+  // TODO:
+  Z_UNUSED(seat);
+  Z_UNUSED(output);
+  Z_UNUSED(pos);
+}
+
+ZMS_EXPORT void
+zms_seat_notify_pointer_button(
+    struct zms_seat* seat, uint32_t time, uint32_t button, uint32_t state)
+{
+  // TODO:
+  Z_UNUSED(seat);
+  Z_UNUSED(time);
+  Z_UNUSED(button);
+  Z_UNUSED(state);
+}

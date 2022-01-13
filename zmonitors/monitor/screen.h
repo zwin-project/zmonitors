@@ -15,6 +15,10 @@ struct zms_screen {
   struct zms_opengl_texture *texture;
 
   bool texture_changed;
+  bool ray_focus;
+
+  // for ray intersection
+  vec3 v0, vx, vy;
 };
 
 struct zms_screen *zms_screen_create(struct zms_monitor *monitor);

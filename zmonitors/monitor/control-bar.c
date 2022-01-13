@@ -32,21 +32,19 @@ static void
 zms_control_bar_calculate_corner_points(struct zms_control_bar *control_bar)
 {
   struct zms_ui_base *ui_base = control_bar->base;
+  struct zms_cuboid_window *cuboid_window = ui_base->root->cuboid_window;
   vec3 right_bottom;
   glm_vec3_copy(ui_base->half_size, right_bottom);
   right_bottom[1] *= -1;
 
   glm_vec3_sub(ui_base->position, ui_base->half_size, control_bar->v0);
-  glm_quat_rotatev(ui_base->root->cuboid_window->quaternion, control_bar->v0,
-      control_bar->v0);
+  glm_quat_rotatev(cuboid_window->quaternion, control_bar->v0, control_bar->v0);
 
   glm_vec3_add(ui_base->position, right_bottom, control_bar->vx);
-  glm_quat_rotatev(ui_base->root->cuboid_window->quaternion, control_bar->vx,
-      control_bar->vx);
+  glm_quat_rotatev(cuboid_window->quaternion, control_bar->vx, control_bar->vx);
 
   glm_vec3_sub(ui_base->position, right_bottom, control_bar->vy);
-  glm_quat_rotatev(ui_base->root->cuboid_window->quaternion, control_bar->vy,
-      control_bar->vy);
+  glm_quat_rotatev(cuboid_window->quaternion, control_bar->vy, control_bar->vy);
 }
 
 static void

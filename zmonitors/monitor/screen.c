@@ -4,6 +4,7 @@
 #include <zigen-opengl-client-protocol.h>
 #include <zmonitors-util.h>
 
+#include "intersect.h"
 #include "monitor-internal.h"
 #include "screen-frag.h"
 #include "screen-vert.h"
@@ -21,15 +22,72 @@ struct vertex_buffer {
   struct vertex vertices[4];
 };
 
+static void
+zms_screen_calculate_corner_points(struct zms_screen* screen)
+{
+  struct zms_ui_base* ui_base = screen->base;
+  struct zms_cuboid_window* cuboid_window = ui_base->root->cuboid_window;
+  vec3 left_top;
+  glm_vec3_copy(ui_base->half_size, left_top);
+  left_top[0] *= -1;
+
+  glm_vec3_add(ui_base->position, left_top, screen->v0);
+  glm_quat_rotatev(cuboid_window->quaternion, screen->v0, screen->v0);
+
+  glm_vec3_add(ui_base->position, ui_base->half_size, screen->vx);
+  glm_quat_rotatev(cuboid_window->quaternion, screen->vx, screen->vx);
+
+  glm_vec3_sub(ui_base->position, ui_base->half_size, screen->vy);
+  glm_quat_rotatev(cuboid_window->quaternion, screen->vy, screen->vy);
+}
+
 static bool
 ray_motion(
     struct zms_ui_base* ui_base, uint32_t time, vec3 origin, vec3 direction)
 {
   // TODO: ray - screen intersection
-  Z_UNUSED(ui_base);
   Z_UNUSED(time);
-  Z_UNUSED(origin);
-  Z_UNUSED(direction);
+  struct zms_screen* screen = ui_base->user_data;
+  vec2 pos;
+  float d;
+
+  if (zms_interesect_ray_rect(
+          origin, direction, screen->v0, screen->vx, screen->vy, pos, &d)) {
+    screen->ray_focus = true;
+    pos[0] *= screen->monitor->screen_size.width;
+    pos[1] *= screen->monitor->screen_size.height;
+    zms_seat_notify_pointer_motion_abs(
+        screen->monitor->compositor->seat, screen->output, pos);
+  } else {
+    screen->ray_focus = false;
+  }
+
+  return true;
+}
+
+static bool
+ray_leave(struct zms_ui_base* ui_base, uint32_t serial)
+{
+  Z_UNUSED(serial);
+  struct zms_screen* screen = ui_base->user_data;
+
+  screen->ray_focus = false;
+
+  return true;
+}
+
+static bool
+ray_button(struct zms_ui_base* ui_base, uint32_t serial, uint32_t time,
+    uint32_t button, uint32_t state)
+{
+  Z_UNUSED(serial);
+  struct zms_screen* screen = ui_base->user_data;
+
+  if (screen->ray_focus) {
+    zms_seat_notify_pointer_button(
+        screen->monitor->compositor->seat, time, button, state);
+  }
+
   return true;
 }
 
@@ -44,6 +102,8 @@ ui_setup(struct zms_ui_base* ui_base)
   struct zms_opengl_texture* texture;
   mat4 transform;
   int output_fd;
+
+  zms_screen_calculate_corner_points(screen);
 
   glm_quat_mat4(ui_base->root->cuboid_window->quaternion, transform);
   glm_translate(transform, ui_base->position);
@@ -116,6 +176,8 @@ ui_reconfigure(struct zms_ui_base* ui_base)
   mat4 transform;
   struct zms_screen* screen = ui_base->user_data;
 
+  zms_screen_calculate_corner_points(screen);
+
   glm_quat_mat4(ui_base->root->cuboid_window->quaternion, transform);
   glm_translate(transform, ui_base->position);
 
@@ -148,7 +210,9 @@ static const struct zms_ui_base_interface ui_base_interface = {
     .reconfigure = ui_reconfigure,
     .repaint = ui_repaint,
     .frame = ui_frame,
+    .ray_leave = ray_leave,
     .ray_motion = ray_motion,
+    .ray_button = ray_button,
 };
 
 static void
@@ -191,6 +255,7 @@ zms_screen_create(struct zms_monitor* monitor)
   screen->output = output;
 
   screen->texture_changed = false;
+  screen->ray_focus = false;
 
   return screen;
 

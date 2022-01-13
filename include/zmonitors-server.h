@@ -10,18 +10,6 @@ extern "C" {
 
 struct zms_compositor;
 
-/* seat */
-
-struct zms_seat_private;
-
-struct zms_seat {
-  struct zms_seat_private *priv;
-};
-
-void zms_seat_init_pointer(struct zms_seat *seat);
-
-void zms_seat_release_pointer(struct zms_seat *seat);
-
 /* output */
 
 struct zms_output;
@@ -48,6 +36,24 @@ void zms_output_set_implementation(struct zms_output *output, void *user_data,
 int zms_output_get_fd(struct zms_output *output);
 
 void zms_output_frame(struct zms_output *output, uint32_t time);
+
+/* seat */
+
+struct zms_seat_private;
+
+struct zms_seat {
+  struct zms_seat_private *priv;
+};
+
+void zms_seat_init_pointer(struct zms_seat *seat);
+
+void zms_seat_release_pointer(struct zms_seat *seat);
+
+void zms_seat_notify_pointer_motion_abs(
+    struct zms_seat *seat, struct zms_output *output, vec2 pos);
+
+void zms_seat_notify_pointer_button(
+    struct zms_seat *seat, uint32_t time, uint32_t button, uint32_t state);
 
 /* view */
 

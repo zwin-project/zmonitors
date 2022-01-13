@@ -3,7 +3,6 @@
 #include <signal.h>
 
 #include "monitor.h"
-#include "seat.h"
 
 static void
 zms_app_gain_ray_cap(void* data)
