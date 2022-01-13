@@ -14,6 +14,9 @@ struct zms_control_bar {
   struct zms_opengl_texture *texture;
 
   bool focus;
+
+  // for ray intersection
+  vec3 v0, vx, vy;
 };
 
 struct zms_control_bar *zms_control_bar_create(struct zms_monitor *monitor);

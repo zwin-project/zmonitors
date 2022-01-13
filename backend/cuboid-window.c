@@ -26,11 +26,14 @@ zms_cuboid_window_protocol_moved(void *data,
     struct zgn_cuboid_window *zgn_cuboid_window,
     struct wl_array *face_direction)
 {
-  // TODO:
-  zms_log("event not implemented yet: zgn_cuboid_window.configure\n");
-  Z_UNUSED(data);
   Z_UNUSED(zgn_cuboid_window);
-  Z_UNUSED(face_direction);
+  struct zms_cuboid_window *cuboid_window = data;
+  vec3 face_direction_vec;
+
+  glm_vec3_from_wl_array(face_direction_vec, face_direction);
+
+  cuboid_window->priv->interface->moved(
+      cuboid_window->priv->user_data, face_direction_vec);
 }
 
 static const struct zgn_cuboid_window_listener cuboid_window_listener = {
@@ -79,6 +82,7 @@ zms_cuboid_window_create(void *user_data,
   priv->proxy = proxy;
   wl_proxy_set_user_data((struct wl_proxy *)proxy, cuboid_window);
   priv->user_data = user_data;
+  priv->interface = interface;
   cuboid_window->priv = priv;
   cuboid_window->backend = backend;
   cuboid_window->virtual_object = virtual_object;
@@ -123,4 +127,19 @@ zms_cuboid_window_move(struct zms_cuboid_window *cuboid_window, uint32_t serial)
 {
   zgn_cuboid_window_move(
       cuboid_window->priv->proxy, cuboid_window->backend->seat, serial);
+  zms_backend_flush(cuboid_window->backend);
+}
+
+ZMS_EXPORT void
+zms_cuboid_window_rotate(
+    struct zms_cuboid_window *cuboid_window, versor quaternion)
+{
+  struct wl_array array;
+  wl_array_init(&array);
+  glm_versor_to_wl_array(quaternion, &array);
+
+  zgn_cuboid_window_rotate(cuboid_window->priv->proxy, &array);
+  zms_backend_flush(cuboid_window->backend);
+
+  wl_array_release(&array);
 }

@@ -45,7 +45,8 @@ ui_setup(struct zms_ui_base* ui_base)
   mat4 transform;
   int output_fd;
 
-  glm_translate_make(transform, ui_base->position);
+  glm_quat_mat4(ui_base->root->cuboid_window->quaternion, transform);
+  glm_translate(transform, ui_base->position);
 
   component =
       zms_opengl_component_create(ui_base->root->cuboid_window->virtual_object);
@@ -110,6 +111,21 @@ ui_teardown(struct zms_ui_base* ui_base)
 }
 
 static void
+ui_reconfigure(struct zms_ui_base* ui_base)
+{
+  mat4 transform;
+  struct zms_screen* screen = ui_base->user_data;
+
+  glm_quat_mat4(ui_base->root->cuboid_window->quaternion, transform);
+  glm_translate(transform, ui_base->position);
+
+  zms_opengl_shader_program_set_uniform_variable_mat4(
+      screen->shader, "transform", transform);
+  zms_opengl_component_attach_shader_program(screen->component, screen->shader);
+  zms_ui_base_schedule_repaint(ui_base);
+}
+
+static void
 ui_repaint(struct zms_ui_base* ui_base)
 {
   struct zms_screen* screen = ui_base->user_data;
@@ -129,6 +145,7 @@ ui_frame(struct zms_ui_base* ui_base, uint32_t time)
 static const struct zms_ui_base_interface ui_base_interface = {
     .setup = ui_setup,
     .teardown = ui_teardown,
+    .reconfigure = ui_reconfigure,
     .repaint = ui_repaint,
     .frame = ui_frame,
     .ray_motion = ray_motion,

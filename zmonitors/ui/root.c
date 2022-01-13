@@ -7,6 +7,14 @@
 #include "monitor.h"
 #include "ui.h"
 
+enum zms_ui_frame_state {
+  ZMS_UI_FRAME_STATE_REPAINT_SCHEDULED = 0,
+  ZMS_UI_FRAME_STATE_WAITING_NEXT_FRAME,
+  ZMS_UI_FRAME_STATE_WAITING_CONTENT_UPDATE,
+};
+
+static void zms_ui_root_commit(struct zms_ui_root* root);
+
 static void
 zms_ui_root_ray_enter(void* data, uint32_t serial, vec3 origin, vec3 direction)
 {
@@ -36,44 +44,32 @@ zms_ui_root_ray_button(
   zms_ui_base_propagate_ray_button(root->base, serial, time, button, state);
 }
 
-static const struct zms_cuboid_window_interface cuboid_window_interface = {{
-    .ray_enter = zms_ui_root_ray_enter,
-    .ray_leave = zms_ui_root_ray_leave,
-    .ray_motion = zms_ui_root_ray_motion,
-    .ray_button = zms_ui_root_ray_button,
-}};
-
 static void
-frame_callback_handler(void* data, uint32_t time)
+zms_ui_root_cuboid_window_moved(void* data, vec3 face_direction)
 {
   struct zms_ui_root* root = data;
-
-  zms_ui_base_run_frame_phase(root->base, time);
-
-  switch (root->frame_state) {
-    case ZMS_UI_FRAME_STATE_REPAINT_SCHEDULED:
-      zms_ui_base_run_repaint_phase(root->base);
-      zms_ui_root_commit(root);
-      break;
-
-    case ZMS_UI_FRAME_STATE_WAITING_NEXT_FRAME:
-      root->frame_state = ZMS_UI_FRAME_STATE_WAITING_CONTENT_UPDATE;
-      break;
-
-    case ZMS_UI_FRAME_STATE_WAITING_CONTENT_UPDATE:
-      assert(false && "not reached");
-      break;
-  }
+  zms_ui_base_propagate_cuboid_window_moved(root->base, face_direction);
 }
+
+static const struct zms_cuboid_window_interface cuboid_window_interface = {
+    {
+        .ray_enter = zms_ui_root_ray_enter,
+        .ray_leave = zms_ui_root_ray_leave,
+        .ray_motion = zms_ui_root_ray_motion,
+        .ray_button = zms_ui_root_ray_button,
+    },
+    .moved = zms_ui_root_cuboid_window_moved,
+};
 
 static void
 cuboid_window_configured_handler(
     void* data, struct zms_cuboid_window* cuboid_window)
 {
-  // TODO: update geom
-  zms_log("[ui root] warn: configured handler not implemented yet\n");
-  Z_UNUSED(data);
   Z_UNUSED(cuboid_window);
+  struct zms_ui_root* root = data;
+  zms_ui_base_run_reconfigure_phase(root->base);
+
+  zms_ui_base_schedule_repaint(root->base);
 }
 
 static void
@@ -110,7 +106,7 @@ zms_ui_root_create(void* user_data,
 
   root->cuboid_window = cuboid_window;
   wl_list_init(&root->frame_callback_list);
-  root->frame_state = ZMS_UI_FRAME_STATE_WAITING_NEXT_FRAME;
+  root->frame_state = ZMS_UI_FRAME_STATE_WAITING_CONTENT_UPDATE;
 
   base = zms_ui_base_create_root(root, user_data, interface);
   if (base == NULL) goto err_base;
@@ -143,17 +139,62 @@ zms_ui_root_destroy(struct zms_ui_root* root)
   free(root);
 }
 
-ZMS_EXPORT void
+// repainting schedule
+
+static void
+frame_callback_handler(void* data, uint32_t time)
+{
+  struct zms_ui_root* root = data;
+
+  zms_ui_base_run_frame_phase(root->base, time);
+
+  switch (root->frame_state) {
+    case ZMS_UI_FRAME_STATE_REPAINT_SCHEDULED:
+      zms_ui_base_run_repaint_phase(root->base);
+      root->frame_state = ZMS_UI_FRAME_STATE_WAITING_CONTENT_UPDATE;
+      zms_ui_root_commit(root);
+      break;
+
+    case ZMS_UI_FRAME_STATE_WAITING_NEXT_FRAME:
+      root->frame_state = ZMS_UI_FRAME_STATE_WAITING_CONTENT_UPDATE;
+      break;
+
+    case ZMS_UI_FRAME_STATE_WAITING_CONTENT_UPDATE:
+      assert(false && "not reached");
+      break;
+  }
+}
+
+static void
 zms_ui_root_commit(struct zms_ui_root* root)
 {
-  struct zms_frame_callback* frame_callback;
+  if (root->frame_state == ZMS_UI_FRAME_STATE_WAITING_CONTENT_UPDATE) {
+    struct zms_frame_callback* frame_callback;
 
-  root->frame_state = ZMS_UI_FRAME_STATE_WAITING_NEXT_FRAME;
-  frame_callback = zms_frame_callback_create(
-      root->cuboid_window->virtual_object, root, frame_callback_handler);
+    root->frame_state = ZMS_UI_FRAME_STATE_WAITING_NEXT_FRAME;
+    frame_callback = zms_frame_callback_create(
+        root->cuboid_window->virtual_object, root, frame_callback_handler);
 
-  wl_list_insert(&root->frame_callback_list, &frame_callback->link);
+    wl_list_insert(&root->frame_callback_list, &frame_callback->link);
+  }
 
   zms_cuboid_window_commit(root->cuboid_window);
   zms_backend_flush(root->cuboid_window->backend);
+}
+
+ZMS_EXPORT void
+zms_ui_root_schedule_repaint(struct zms_ui_root* root)
+{
+  switch (root->frame_state) {
+    case ZMS_UI_FRAME_STATE_REPAINT_SCHEDULED:
+      // fall through
+    case ZMS_UI_FRAME_STATE_WAITING_NEXT_FRAME:
+      root->frame_state = ZMS_UI_FRAME_STATE_REPAINT_SCHEDULED;
+      break;
+
+    case ZMS_UI_FRAME_STATE_WAITING_CONTENT_UPDATE:
+      zms_ui_base_run_repaint_phase(root->base);
+      zms_ui_root_commit(root);
+      break;
+  }
 }

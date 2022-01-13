@@ -47,6 +47,7 @@ struct zms_cuboid_window_private;
 
 struct zms_cuboid_window_interface {
   const struct zms_virtual_object_interface base;
+  void (*moved)(void* data, vec3 face_direction);
 };
 
 struct zms_cuboid_window {
@@ -70,6 +71,9 @@ void zms_cuboid_window_commit(struct zms_cuboid_window* cuboid_window);
 
 void zms_cuboid_window_move(
     struct zms_cuboid_window* cuboid_window, uint32_t serial);
+
+void zms_cuboid_window_rotate(
+    struct zms_cuboid_window* cuboid_window, versor quaternion);
 
 /* opengl shader */
 

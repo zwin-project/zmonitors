@@ -29,6 +29,27 @@ static vec3 unfocus_color = {0.6f, 0.6f, 0.6f};
 static vec3 focus_color = {1.0f, 1.0f, 1.0f};
 
 static void
+zms_control_bar_calculate_corner_points(struct zms_control_bar *control_bar)
+{
+  struct zms_ui_base *ui_base = control_bar->base;
+  vec3 right_bottom;
+  glm_vec3_copy(ui_base->half_size, right_bottom);
+  right_bottom[1] *= -1;
+
+  glm_vec3_sub(ui_base->position, ui_base->half_size, control_bar->v0);
+  glm_quat_rotatev(ui_base->root->cuboid_window->quaternion, control_bar->v0,
+      control_bar->v0);
+
+  glm_vec3_add(ui_base->position, right_bottom, control_bar->vx);
+  glm_quat_rotatev(ui_base->root->cuboid_window->quaternion, control_bar->vx,
+      control_bar->vx);
+
+  glm_vec3_sub(ui_base->position, right_bottom, control_bar->vy);
+  glm_quat_rotatev(ui_base->root->cuboid_window->quaternion, control_bar->vy,
+      control_bar->vy);
+}
+
+static void
 ray_focus(struct zms_control_bar *control_bar)
 {
   control_bar->focus = true;
@@ -68,17 +89,11 @@ ray_motion(
 {
   Z_UNUSED(time);
   struct zms_control_bar *control_bar = ui_base->user_data;
-  vec3 v0, vx, vy, right_bottom;
   vec2 pos;
   float d;
-  glm_vec3_copy(ui_base->half_size, right_bottom);
-  right_bottom[1] *= -1;
 
-  glm_vec3_sub(ui_base->position, ui_base->half_size, v0);
-  glm_vec3_add(ui_base->position, right_bottom, vx);
-  glm_vec3_sub(ui_base->position, right_bottom, vy);
-
-  if (zms_interesect_ray_rect(origin, direction, v0, vx, vy, pos, &d)) {
+  if (zms_interesect_ray_rect(origin, direction, control_bar->v0,
+          control_bar->vx, control_bar->vy, pos, &d)) {
     if (!control_bar->focus) ray_focus(control_bar);
   } else {
     if (control_bar->focus) ray_unfocus(control_bar);
@@ -109,7 +124,10 @@ ui_setup(struct zms_ui_base *ui_base)
   struct zms_screen_size texture_size = {200, 100};
   mat4 transform;
 
-  glm_translate_make(transform, ui_base->position);
+  zms_control_bar_calculate_corner_points(control_bar);
+
+  glm_quat_mat4(ui_base->root->cuboid_window->quaternion, transform);
+  glm_translate(transform, ui_base->position);
 
   component =
       zms_opengl_component_create(ui_base->root->cuboid_window->virtual_object);
@@ -218,9 +236,28 @@ ui_teardown(struct zms_ui_base *ui_base)
   zms_opengl_component_destroy(control_bar->component);
 }
 
+static void
+ui_reconfigure(struct zms_ui_base *ui_base)
+{
+  mat4 transform;
+  struct zms_control_bar *control_bar = ui_base->user_data;
+
+  zms_control_bar_calculate_corner_points(control_bar);
+
+  glm_quat_mat4(ui_base->root->cuboid_window->quaternion, transform);
+  glm_translate(transform, ui_base->position);
+
+  zms_opengl_shader_program_set_uniform_variable_mat4(
+      control_bar->shader, "transform", transform);
+  zms_opengl_component_attach_shader_program(
+      control_bar->component, control_bar->shader);
+  zms_ui_base_schedule_repaint(ui_base);
+}
+
 static const struct zms_ui_base_interface ui_base_interface = {
     .setup = ui_setup,
     .teardown = ui_teardown,
+    .reconfigure = ui_reconfigure,
     .ray_motion = ray_motion,
     .ray_leave = ray_leave,
     .ray_button = ray_button,

@@ -17,7 +17,7 @@
 #define CONTROL_BAR_WIDTH 0.4
 
 static void
-ui_setup(struct zms_ui_base* ui_base)
+ui_setup_geometry(struct zms_ui_base* ui_base)
 {
   struct zms_monitor* monitor = ui_base->user_data;
 
@@ -30,9 +30,14 @@ ui_setup(struct zms_ui_base* ui_base)
 
   monitor->control_bar->base->half_size[0] = CONTROL_BAR_WIDTH / 2;
   monitor->control_bar->base->half_size[1] = CONTROL_BAR_HEIGHT / 2;
-
   monitor->control_bar->base->position[1] =
       -ui_base->half_size[1] + CUBOID_PADDING + CONTROL_BAR_HEIGHT / 2;
+}
+
+static void
+ui_setup(struct zms_ui_base* ui_base)
+{
+  ui_setup_geometry(ui_base);
 }
 
 static void
@@ -41,9 +46,31 @@ ui_teardown(struct zms_ui_base* ui_base)
   Z_UNUSED(ui_base);
 }
 
+static void
+ui_reconfigure(struct zms_ui_base* ui_base)
+{
+  ui_setup_geometry(ui_base);
+}
+
+static bool
+cuboid_window_moved(struct zms_ui_base* ui_base, vec3 face_direction)
+{
+  Z_UNUSED(ui_base);
+  vec3 front = {0.0f, 0.0f, 1.0f};
+  versor quaternion;
+
+  glm_quat_from_vecs(front, face_direction, quaternion);
+
+  zms_cuboid_window_rotate(ui_base->root->cuboid_window, quaternion);
+
+  return true;
+}
+
 static const struct zms_ui_base_interface ui_base_interface = {
     .setup = ui_setup,
     .teardown = ui_teardown,
+    .reconfigure = ui_reconfigure,
+    .cuboid_window_moved = cuboid_window_moved,
 };
 
 ZMS_EXPORT struct zms_monitor*
