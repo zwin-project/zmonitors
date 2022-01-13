@@ -12,6 +12,8 @@ struct zms_control_bar {
   struct zms_opengl_shader_program *shader;
   struct zms_opengl_vertex_buffer *vertex_buffer;
   struct zms_opengl_texture *texture;
+
+  bool focus;
 };
 
 struct zms_control_bar *zms_control_bar_create(struct zms_monitor *monitor);

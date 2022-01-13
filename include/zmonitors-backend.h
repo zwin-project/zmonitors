@@ -68,6 +68,9 @@ void zms_cuboid_window_destroy(struct zms_cuboid_window* cuboid_window);
 
 void zms_cuboid_window_commit(struct zms_cuboid_window* cuboid_window);
 
+void zms_cuboid_window_move(
+    struct zms_cuboid_window* cuboid_window, uint32_t serial);
+
 /* opengl shader */
 
 struct zms_opengl_shader_program;
@@ -82,6 +85,9 @@ void zms_opengl_shader_program_destroy(
 
 void zms_opengl_shader_program_set_uniform_variable_mat4(
     struct zms_opengl_shader_program* program, const char* location, mat4 mat);
+
+void zms_opengl_shader_program_set_uniform_variable_vec3(
+    struct zms_opengl_shader_program* program, const char* location, vec3 vec);
 
 /* opengl vertex buffer*/
 

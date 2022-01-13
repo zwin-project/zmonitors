@@ -13,6 +13,7 @@ deps_zmonitors = [
 
 srcs_zmonitors = [
   'app.c',
+  'intersect.c',
   'main.c',
   zigen_client_protocol_h,
 ]

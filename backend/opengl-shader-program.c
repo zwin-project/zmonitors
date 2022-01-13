@@ -91,3 +91,15 @@ zms_opengl_shader_program_set_uniform_variable_mat4(
       program->proxy, location, 4, 4, false, 1, &array);
   wl_array_release(&array);
 }
+
+ZMS_EXPORT void
+zms_opengl_shader_program_set_uniform_variable_vec3(
+    struct zms_opengl_shader_program* program, const char* location, vec3 vec)
+{
+  struct wl_array array;
+  wl_array_init(&array);
+  glm_vec3_to_wl_array(vec, &array);
+  zgn_opengl_shader_program_set_uniform_float_vector(
+      program->proxy, location, 3, 1, &array);
+  wl_array_release(&array);
+}

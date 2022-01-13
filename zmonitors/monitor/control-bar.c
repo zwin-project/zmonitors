@@ -1,12 +1,15 @@
 #include "control-bar.h"
 
+#include <linux/input-event-codes.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <zigen-client-protocol.h>
 #include <zigen-opengl-client-protocol.h>
 #include <zmonitors-util.h>
 
 #include "control-bar-frag.h"
 #include "control-bar-vert.h"
+#include "intersect.h"
 #include "monitor-internal.h"
 
 struct uv {
@@ -21,6 +24,78 @@ struct vertex {
 struct vertex_buffer {
   struct vertex vertices[8];
 };
+
+static vec3 unfocus_color = {0.6f, 0.6f, 0.6f};
+static vec3 focus_color = {1.0f, 1.0f, 1.0f};
+
+static void
+ray_focus(struct zms_control_bar *control_bar)
+{
+  control_bar->focus = true;
+  zms_opengl_shader_program_set_uniform_variable_vec3(
+      control_bar->shader, "color", focus_color);
+  zms_opengl_component_attach_shader_program(
+      control_bar->component, control_bar->shader);
+  zms_ui_base_schedule_repaint(control_bar->base);
+}
+
+static void
+ray_unfocus(struct zms_control_bar *control_bar)
+{
+  control_bar->focus = false;
+  zms_opengl_shader_program_set_uniform_variable_vec3(
+      control_bar->shader, "color", unfocus_color);
+  zms_opengl_component_attach_shader_program(
+      control_bar->component, control_bar->shader);
+  zms_ui_base_schedule_repaint(control_bar->base);
+}
+
+static bool
+ray_button(struct zms_ui_base *ui_base, uint32_t serial, uint32_t time,
+    uint32_t button, uint32_t state)
+{
+  Z_UNUSED(time);
+  struct zms_control_bar *control_bar = ui_base->user_data;
+  if (control_bar->focus && button == BTN_LEFT &&
+      state == ZGN_RAY_BUTTON_STATE_PRESSED)
+    zms_cuboid_window_move(ui_base->root->cuboid_window, serial);
+  return true;
+}
+
+static bool
+ray_motion(
+    struct zms_ui_base *ui_base, uint32_t time, vec3 origin, vec3 direction)
+{
+  Z_UNUSED(time);
+  struct zms_control_bar *control_bar = ui_base->user_data;
+  vec3 v0, vx, vy, right_bottom;
+  vec2 pos;
+  float d;
+  glm_vec3_copy(ui_base->half_size, right_bottom);
+  right_bottom[1] *= -1;
+
+  glm_vec3_sub(ui_base->position, ui_base->half_size, v0);
+  glm_vec3_add(ui_base->position, right_bottom, vx);
+  glm_vec3_sub(ui_base->position, right_bottom, vy);
+
+  if (zms_interesect_ray_rect(origin, direction, v0, vx, vy, pos, &d)) {
+    if (!control_bar->focus) ray_focus(control_bar);
+  } else {
+    if (control_bar->focus) ray_unfocus(control_bar);
+  }
+  return true;
+}
+
+static bool
+ray_leave(struct zms_ui_base *ui_base, uint32_t serial)
+{
+  Z_UNUSED(serial);
+  struct zms_control_bar *control_bar = ui_base->user_data;
+
+  if (control_bar->focus) ray_unfocus(control_bar);
+
+  return true;
+}
 
 static void
 ui_setup(struct zms_ui_base *ui_base)
@@ -114,6 +189,8 @@ ui_setup(struct zms_ui_base *ui_base)
 
   zms_opengl_shader_program_set_uniform_variable_mat4(
       shader, "transform", transform);
+  zms_opengl_shader_program_set_uniform_variable_vec3(
+      shader, "color", unfocus_color);
 
   zms_opengl_component_attach_vertex_buffer(component, vertex_buffer);
   zms_opengl_component_attach_shader_program(component, shader);
@@ -144,6 +221,9 @@ ui_teardown(struct zms_ui_base *ui_base)
 static const struct zms_ui_base_interface ui_base_interface = {
     .setup = ui_setup,
     .teardown = ui_teardown,
+    .ray_motion = ray_motion,
+    .ray_leave = ray_leave,
+    .ray_button = ray_button,
 };
 
 ZMS_EXPORT struct zms_control_bar *

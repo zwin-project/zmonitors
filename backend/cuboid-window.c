@@ -117,3 +117,10 @@ zms_cuboid_window_commit(struct zms_cuboid_window *cuboid_window)
 {
   zgn_virtual_object_commit(cuboid_window->virtual_object->proxy);
 }
+
+ZMS_EXPORT void
+zms_cuboid_window_move(struct zms_cuboid_window *cuboid_window, uint32_t serial)
+{
+  zgn_cuboid_window_move(
+      cuboid_window->priv->proxy, cuboid_window->backend->seat, serial);
+}

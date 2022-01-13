@@ -40,6 +40,7 @@ srcs_zms_monitor = [
   control_bar_vertex_glsl,
   screen_fragment_glsl,
   screen_vertex_glsl,
+  zigen_client_protocol_h,
   zigen_opengl_client_protocol_h,
 ]
 
