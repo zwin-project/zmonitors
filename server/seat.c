@@ -3,6 +3,7 @@
 #include <zmonitors-server.h>
 
 #include "compositor.h"
+#include "output.h"
 
 static void
 zms_seat_protocol_get_pointer(
@@ -186,8 +187,10 @@ zms_seat_notify_pointer_motion_abs(
 {
   // TODO:
   Z_UNUSED(seat);
-  Z_UNUSED(output);
-  Z_UNUSED(pos);
+  int vx, vy;
+  struct zms_view* view;
+  view = zms_output_pick_view(output, pos[0], pos[1], &vx, &vy);
+  Z_UNUSED(view);
 }
 
 ZMS_EXPORT void

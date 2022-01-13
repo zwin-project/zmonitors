@@ -85,3 +85,20 @@ zms_view_set_origin(struct zms_view* view, float x, float y)
   view->priv->origin[0] = x;
   view->priv->origin[1] = y;
 }
+
+ZMS_EXPORT bool
+zms_view_contains(struct zms_view* view, int x, int y, int* vx, int* vy)
+{
+  int view_x = x - view->priv->origin[0];
+  int view_y = y - view->priv->origin[1];
+
+  if (0 <= view_x && 0 <= view_y &&
+      (uint32_t)view_x <= zms_view_get_width(view) &&
+      (uint32_t)view_y <= zms_view_get_height(view)) {
+    *vx = view_x;
+    *vy = view_y;
+    return true;
+  }
+
+  return false;
+}

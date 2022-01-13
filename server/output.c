@@ -379,3 +379,17 @@ render(struct zms_output* output, pixman_region32_t* damage)
     pixman_region32_fini(&repaint_region);
   }
 }
+
+ZMS_EXPORT struct zms_view*
+zms_output_pick_view(struct zms_output* output, int x, int y, int* vx, int* vy)
+{
+  struct zms_view_private* view_priv;
+  struct zms_view* view;
+  wl_list_for_each_reverse(view_priv, &output->priv->view_list, link)
+  {
+    view = view_priv->pub;
+    if (zms_view_contains(view, x, y, vx, vy)) return view;
+  }
+
+  return NULL;
+}
