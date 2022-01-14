@@ -66,6 +66,7 @@ struct zms_view {
 
   // signals
   struct zms_signal destroy_signal;
+  struct zms_signal unmap_signal; /* invoked also when destroyed; */
 };
 
 /* compositor */

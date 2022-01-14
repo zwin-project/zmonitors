@@ -204,12 +204,18 @@ zms_seat_notify_pointer_button(struct zms_seat* seat, uint32_t time,
   if (pointer == NULL) return;
 
   if (state == WL_POINTER_BUTTON_STATE_PRESSED) {
+    if (pointer->button_count == 0) {
+      pointer->grab_x = pointer->x;
+      pointer->grab_y = pointer->y;
+    }
     pointer->button_count++;
   } else if (pointer->button_count > 0) {
     pointer->button_count--;
   }
 
   pointer->grab->interface->button(pointer->grab, time, button, state, serial);
+
+  if (pointer->button_count == 1) pointer->grab_serial = serial;
 }
 
 ZMS_EXPORT void
@@ -221,5 +227,8 @@ zms_seat_notify_pointer_leave(struct zms_seat* seat)
 
   if (pointer) pointer->grab->interface->cancel(pointer->grab);
 
+  zms_pointer_move_to(pointer, NULL, 0, 0);
+
+  pointer->grab_serial = 0;
   pointer->button_count = 0;
 }

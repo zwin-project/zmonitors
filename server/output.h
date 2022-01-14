@@ -36,6 +36,8 @@ void zms_output_unmap_view(struct zms_output* output, struct zms_view* view);
 
 void zms_output_update_view(struct zms_output* output, struct zms_view* view);
 
+void zms_output_render(struct zms_output* output, pixman_region32_t* damage);
+
 struct zms_view* zms_output_pick_view(
     struct zms_output* output, float x, float y, float* vx, float* vy);
 
