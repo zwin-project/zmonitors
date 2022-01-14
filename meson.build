@@ -7,18 +7,28 @@ project(
 )
 
 if get_option('debug')
-  add_global_arguments('-DDEBUG', language: [ 'c', 'cpp' ])
+  add_global_arguments('-DDEBUG', language: [ 'c' ])
 endif
+add_global_arguments('-D_GNU_SOURCE', language: [ 'c' ])
 
 public_inc = include_directories('include')
 
 # dependencies
 dep_wayland_server = dependency('wayland-server')
 dep_wayland_client = dependency('wayland-client')
+dep_wayland_protocols = dependency('wayland-protocols')
 dep_wayland_scanner = dependency('wayland-scanner', version: '>= 1.14.91')
 dep_zgn_protocol = dependency('zigen-protocols')
 dep_cglm = dependency('cglm')
+dep_pixman = dependency('pixman-1')
+dep_m = meson.get_compiler('c').find_library('m')
 
+prog_python = import('python').find_installation('python3')
+files_textify_py = files('tools/textify.py')
+cmd_textify = [ prog_python, files_textify_py, '@INPUT@', '@OUTPUT@']
+
+subdir('protocols')
 subdir('util')
 subdir('server')
+subdir('backend')
 subdir('zmonitors')

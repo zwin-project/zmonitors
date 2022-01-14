@@ -1,26 +1,34 @@
 #include "compositor.h"
 
+#include <stdbool.h>
 #include <wayland-server.h>
-#include <zmonitors.h>
+#include <zmonitors-server.h>
+
+#include "output.h"
+#include "region.h"
+#include "seat.h"
+#include "surface.h"
+#include "view.h"
+#include "xdg-wm-base.h"
 
 static void
 zms_compositor_protocol_create_surface(
     struct wl_client* client, struct wl_resource* resource, uint32_t id)
 {
-  // TODO:
-  Z_UNUSED(client);
-  Z_UNUSED(resource);
-  Z_UNUSED(id);
+  struct zms_compositor* compositor;
+
+  compositor = wl_resource_get_user_data(resource);
+
+  zms_surface_create(client, id, compositor);
 }
 
 static void
 zms_compositor_protocol_create_region(
     struct wl_client* client, struct wl_resource* resource, uint32_t id)
 {
-  // TODO:
-  Z_UNUSED(client);
   Z_UNUSED(resource);
-  Z_UNUSED(id);
+
+  zms_region_create(client, id);
 }
 
 static const struct wl_compositor_interface compositor_interface = {
@@ -32,11 +40,10 @@ static void
 zms_compositor_bind(
     struct wl_client* client, void* data, uint32_t version, uint32_t id)
 {
-  Z_UNUSED(version);
   struct zms_compositor* compositor = data;
   struct wl_resource* resource;
 
-  resource = wl_resource_create(client, &wl_compositor_interface, 4, id);
+  resource = wl_resource_create(client, &wl_compositor_interface, version, id);
   if (resource == NULL) {
     wl_client_post_no_memory(client);
     return;
@@ -53,6 +60,8 @@ zms_compositor_create()
   struct zms_compositor_private* priv;
   struct wl_display* display;
   struct wl_global* global;
+  struct zms_wm_base* wm_base;
+  struct zms_seat* seat;
   const char* socket;
 
   display = wl_display_create();
@@ -63,13 +72,13 @@ zms_compositor_create()
 
   compositor = zalloc(sizeof *compositor);
   if (compositor == NULL) {
-    zms_log("failed to create a compositor\n");
+    zms_log("failed to allocate memory\n");
     goto err_compositor;
   }
 
   priv = zalloc(sizeof *priv);
   if (priv == NULL) {
-    zms_log("failed to create a compositor priv\n");
+    zms_log("failed to allocate memory\n");
     goto err_priv;
   }
 
@@ -82,18 +91,41 @@ zms_compositor_create()
 
   socket = wl_display_add_socket_auto(display);
   if (socket == NULL) {
-    zms_log("failed to create a socket\n");
-    goto err_socket;
+    zms_log("failed to create a display socket\n");
+    goto err_global;
   }
 
-  priv->display = display;
-  priv->global = global;
-
+  wl_list_init(&priv->output_list);
   compositor->priv = priv;
+  compositor->display = display;
+
+  /* create global objects */
+
+  if (wl_display_init_shm(display) == -1) {
+    zms_log("failed to initialize shm\n");
+    goto err_global;
+  }
+
+  wm_base = zms_wm_base_create(compositor);
+  if (wm_base == NULL) {
+    zms_log("failed to create a wm_base\n");
+    goto err_global;
+  }
+
+  seat = zms_seat_create(compositor);
+  if (seat == NULL) {
+    zms_log("failed to create a seat\n");
+    goto err_seat;
+  }
+
+  compositor->priv->wm_base = wm_base;
+  compositor->seat = seat;
 
   return compositor;
 
-err_socket:
+err_seat:
+  zms_wm_base_destroy(wm_base);
+
 err_global:
   free(priv);
 
@@ -107,23 +139,24 @@ err_display:
   return NULL;
 }
 
-WL_EXPORT void
+ZMS_EXPORT void
 zms_compositor_destroy(struct zms_compositor* compositor)
 {
-  wl_display_destroy(compositor->priv->display);
+  zms_seat_destroy(compositor->seat);
+  zms_wm_base_destroy(compositor->priv->wm_base);
+  wl_display_destroy(compositor->display);
   free(compositor->priv);
   free(compositor);
 }
 
-WL_EXPORT void
-zms_compositor_flush_clients(struct zms_compositor* compositor)
+ZMS_EXPORT struct zms_output*
+zms_compositor_get_primary_output(struct zms_compositor* compositor)
 {
-  wl_display_flush_clients(compositor->priv->display);
-}
+  struct zms_output* output;
 
-WL_EXPORT void
-zms_compositor_dispatch_event(struct zms_compositor* compositor, int timeout)
-{
-  wl_event_loop_dispatch(
-      wl_display_get_event_loop(compositor->priv->display), timeout);
+  assert(wl_list_length(&compositor->priv->output_list) > 0);
+
+  wl_list_for_each(output, &compositor->priv->output_list, link) return output;
+
+  assert(false && "not reached");
 }

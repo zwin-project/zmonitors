@@ -1,16 +1,27 @@
-dep_zmonitors = [
+zmonitors_private_inc = include_directories('.')
+
+subdir('ui')
+subdir('monitor')
+
+deps_zmonitors = [
+  dep_wayland_server,
+  dep_zmonitors_backend,
   dep_zmonitors_server,
   dep_zmonitors_util,
+  dep_zms_monitor,
 ]
 
-src_zmonitors = [
+srcs_zmonitors = [
+  'app.c',
+  'intersect.c',
   'main.c',
+  zigen_client_protocol_h,
 ]
 
 executable(
   'zmonitors',
-  src_zmonitors,
+  srcs_zmonitors,
   install: true,
   pie: true,
-  dependencies: dep_zmonitors,
+  dependencies: deps_zmonitors,
 )

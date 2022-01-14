@@ -1,50 +1,23 @@
-#include <signal.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <zmonitors.h>
-
-volatile sig_atomic_t run = false;
-
-void
-sig_app_end_handler(int signum)
-{
-  Z_UNUSED(signum);
-  run = false;
-}
-
-bool
-register_signal_handlers()
-{
-  if (signal(SIGINT, sig_app_end_handler) == SIG_ERR) return false;
-  if (signal(SIGTERM, sig_app_end_handler) == SIG_ERR) return false;
-  if (signal(SIGQUIT, sig_app_end_handler) == SIG_ERR) return false;
-  return true;
-}
+#include "app.h"
 
 int
 main()
 {
+  struct zms_app *app;
   int exit_code = EXIT_FAILURE;
-  if (!register_signal_handlers()) goto out;
 
-  struct zms_compositor *compositor;
+  app = zms_app_create();
+  if (app == NULL) goto out;
 
-  compositor = zms_compositor_create();
-  if (compositor == NULL) goto out;
-
-  run = true;
-  while (run) {
-    zms_compositor_flush_clients(compositor);
-    zms_compositor_dispatch_event(compositor, 0);
-  }
+  zms_app_run(app);
 
   exit_code = EXIT_SUCCESS;
 
   /* exit */
 
-  zms_compositor_destroy(compositor);
+  zms_app_destroy(app);
 
 out:
-  if (exit_code == EXIT_SUCCESS) zms_log("\nzmonitors exited successfully.\n");
+  if (exit_code == EXIT_SUCCESS) zms_log("zmonitors exited successfully.\n");
   return exit_code;
 }
