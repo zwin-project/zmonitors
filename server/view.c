@@ -27,6 +27,7 @@ zms_view_create(struct zms_surface* surface)
 
   view->priv = priv;
   zms_signal_init(&view->destroy_signal);
+  zms_signal_init(&view->unmap_signal);
 
   return view;
 
@@ -40,6 +41,7 @@ err:
 ZMS_EXPORT void
 zms_view_destroy(struct zms_view* view)
 {
+  zms_signal_emit(&view->unmap_signal, NULL);
   zms_signal_emit(&view->destroy_signal, NULL);
   zms_output_unmap_view(view->priv->output, view);
   if (view->priv->image) pixman_image_unref(view->priv->image);

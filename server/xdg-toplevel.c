@@ -3,6 +3,7 @@
 #include <xdg-shell-server-protocol.h>
 #include <zmonitors-server.h>
 
+#include "move-grab.h"
 #include "output.h"
 
 static void zms_xdg_toplevel_destroy(struct zms_xdg_toplevel *toplevel);
@@ -76,14 +77,17 @@ zms_xdg_toplevel_protocol_show_window_menu(struct wl_client *client,
 
 static void
 zms_xdg_toplevel_protocol_move(struct wl_client *client,
-    struct wl_resource *resource, struct wl_resource *seat, uint32_t serial)
+    struct wl_resource *resource, struct wl_resource *seat_resource,
+    uint32_t serial)
 {
-  // TODO:
-  zms_log("request not implemented yet: xdg_toplevel.move\n");
   Z_UNUSED(client);
-  Z_UNUSED(resource);
-  Z_UNUSED(seat);
-  Z_UNUSED(serial);
+  struct zms_xdg_toplevel *toplevel;
+  struct zms_seat *seat;
+
+  seat = wl_resource_get_user_data(seat_resource);
+  toplevel = wl_resource_get_user_data(resource);
+
+  zms_move_grab_start(seat, toplevel->xdg_surface->surface->view, serial);
 }
 
 static void

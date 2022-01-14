@@ -8,7 +8,7 @@
 
 struct zms_pointer_grab {
   const struct zms_pointer_grab_interface* interface;
-  struct zms_pointer* pointer;
+  struct zms_pointer* pointer; /* nonnull */
 };
 
 struct zms_pointer_grab_interface {
@@ -25,13 +25,16 @@ struct zms_pointer {
   struct zms_pointer_grab* grab;
   struct zms_pointer_grab default_grab;
   uint32_t button_count;
+  uint32_t grab_serial;
+
+  float grab_x, grab_y;
 
   struct zms_output* output; /* nullable */
   float x, y;
 
   struct wl_list point_client_list;
 
-  struct zms_weak_ref focus_view_ref;
+  struct zms_weak_ref focus_view_ref; /** keeps *mapped* view */
   float vx, vy;
 
   // signals
@@ -41,5 +44,18 @@ struct zms_pointer {
 struct zms_pointer* zms_pointer_create(struct zms_seat* seat);
 
 void zms_pointer_destroy(struct zms_pointer* pointer);
+
+void zms_pointer_set_focus(struct zms_pointer* pointer,
+    struct zms_view* view /* nullable */, float vx, float vy);
+
+void zms_pointer_move_to(
+    struct zms_pointer* pointer, struct zms_output* output, float x, float y);
+
+bool zms_pointer_has_no_grab(struct zms_pointer* pointer);
+
+void zms_pointer_start_grab(
+    struct zms_pointer* pointer, struct zms_pointer_grab* grab);
+
+void zms_pointer_end_grab(struct zms_pointer* pointer);
 
 #endif  //  ZMONITORS_SERVER_POINTER_H

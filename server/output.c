@@ -11,8 +11,6 @@
 #include "surface.h"
 #include "view.h"
 
-static void render(struct zms_output* output, pixman_region32_t* damage);
-
 static void
 draw_background(struct zms_bgra* bg, struct zms_screen_size size)
 {
@@ -197,7 +195,7 @@ zms_output_create(struct zms_compositor* compositor,
   output->priv = priv;
   wl_list_insert(&compositor->priv->output_list, &output->link);
 
-  render(output, &output->priv->region);
+  zms_output_render(output, &output->priv->region);
 
   return output;
 
@@ -288,12 +286,9 @@ zms_output_map_view(struct zms_output* output, struct zms_view* view)
 
   pixman_region32_init_view_global(&damage, view);
 
-  render(output, &damage);
+  zms_output_render(output, &damage);
 
   pixman_region32_fini(&damage);
-
-  if (output->priv->interface)
-    output->priv->interface->schedule_repaint(output->priv->user_data, output);
 }
 
 ZMS_EXPORT void
@@ -310,12 +305,10 @@ zms_output_unmap_view(struct zms_output* output, struct zms_view* view)
 
   pixman_region32_init_view_global(&damage, view);
 
-  render(output, &damage);
+  zms_output_render(output, &damage);
 
   pixman_region32_fini(&damage);
-
-  if (output->priv->interface)
-    output->priv->interface->schedule_repaint(output->priv->user_data, output);
+  zms_signal_emit(&view->unmap_signal, NULL);
 }
 
 ZMS_EXPORT void
@@ -326,16 +319,13 @@ zms_output_update_view(struct zms_output* output, struct zms_view* view)
 
   pixman_region32_init_view_global(&damage, view);
 
-  render(output, &damage);
+  zms_output_render(output, &damage);
 
   pixman_region32_fini(&damage);
-
-  if (output->priv->interface)
-    output->priv->interface->schedule_repaint(output->priv->user_data, output);
 }
 
-static void
-render(struct zms_output* output, pixman_region32_t* damage)
+ZMS_EXPORT void
+zms_output_render(struct zms_output* output, pixman_region32_t* damage)
 {
   struct zms_view_private* view_priv;
   struct zms_view* view;
@@ -378,6 +368,9 @@ render(struct zms_output* output, pixman_region32_t* damage)
     pixman_region32_fini(&view_region);
     pixman_region32_fini(&repaint_region);
   }
+
+  if (output->priv->interface)
+    output->priv->interface->schedule_repaint(output->priv->user_data, output);
 }
 
 ZMS_EXPORT struct zms_view*
