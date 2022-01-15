@@ -287,10 +287,6 @@ zms_output_map_view(struct zms_output* output, struct zms_view* view,
   wl_list_insert(
       &output->priv->layers[layer_index].view_list, &view->priv->link);
 
-  zms_view_set_origin(view,
-      (output->priv->size.width - zms_view_get_width(view)) / 2,
-      (output->priv->size.height - zms_view_get_height(view)) / 2);
-
   pixman_region32_init_view_global(&damage, view);
 
   zms_output_render(output, &damage);
@@ -316,19 +312,6 @@ zms_output_unmap_view(struct zms_output* output, struct zms_view* view)
 
   pixman_region32_fini(&damage);
   zms_signal_emit(&view->unmap_signal, NULL);
-}
-
-ZMS_EXPORT void
-zms_output_update_view(struct zms_output* output, struct zms_view* view)
-{
-  assert(output == view->priv->output);
-  pixman_region32_t damage;
-
-  pixman_region32_init_view_global(&damage, view);
-
-  zms_output_render(output, &damage);
-
-  pixman_region32_fini(&damage);
 }
 
 ZMS_EXPORT void

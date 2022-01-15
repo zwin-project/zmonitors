@@ -53,6 +53,4 @@ int zms_surface_set_role(struct zms_surface *surface,
 
 void zms_surface_send_frame_done(struct zms_surface *surface, uint32_t time);
 
-void zms_surface_clear_pending_buffer(struct zms_surface *surface);
-
 #endif  //  ZMONITORS_SERVER_SURFACE_H

@@ -5,6 +5,7 @@
 
 #include "compositor.h"
 #include "output.h"
+#include "pixman-helper.h"
 
 ZMS_EXPORT struct zms_view*
 zms_view_create(struct zms_surface* surface)
@@ -57,16 +58,15 @@ zms_view_commit(struct zms_view* view)
   int32_t width, height, stride;
   struct wl_shm_buffer* shm_buffer;
   struct zms_surface* surface = view->priv->surface;
+  pixman_region32_t damage;
 
   if (surface->pending.newly_attached == false) return -1;
 
-  if (view->priv->image) {
-    pixman_image_unref(view->priv->image);
-    view->priv->image = NULL;
-  }
-
   if (surface->pending.buffer == NULL) {
+    zms_output_unmap_view(view->priv->output, view);
     glm_vec2_zero(view->priv->origin);
+    if (view->priv->image) pixman_image_unref(view->priv->image);
+    view->priv->image = NULL;
   } else {
     shm_buffer = wl_shm_buffer_get(surface->pending.buffer->resource);
     width = wl_shm_buffer_get_width(shm_buffer);
@@ -74,8 +74,18 @@ zms_view_commit(struct zms_view* view)
     data = wl_shm_buffer_get_data(shm_buffer);
     stride = wl_shm_buffer_get_stride(shm_buffer);
 
+    if (view->priv->image) pixman_image_unref(view->priv->image);
     view->priv->image =
         pixman_image_create_bits(PIXMAN_a8r8g8b8, width, height, data, stride);
+
+    if (zms_view_is_mapped(view)) {
+      // FIXME: using damage requests
+      pixman_region32_init_view_global(&damage, view);
+
+      zms_output_render(view->priv->output, &damage);
+
+      pixman_region32_fini(&damage);
+    }
   }
 
   zms_buffer_reference(&view->priv->buffer_ref, surface->pending.buffer);

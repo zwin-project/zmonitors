@@ -37,6 +37,12 @@ int zms_view_commit(struct zms_view* view);
 void zms_view_set_origin(struct zms_view* view, float x, float y);
 
 static inline bool
+zms_view_has_image(struct zms_view* view)
+{
+  return view->priv->image != NULL;
+}
+
+static inline bool
 zms_view_is_mapped(struct zms_view* view)
 {
   return view->priv->output != NULL;

@@ -4,9 +4,21 @@
 
 #include "buffer.h"
 #include "frame-callback.h"
+#include "output.h"
+#include "pixman-helper.h"
 #include "view.h"
 
 static void zms_surface_destroy(struct zms_surface *surface);
+
+static void
+zms_surface_clear_pending_buffer(struct zms_surface *surface)
+{
+  if (surface->pending.buffer)
+    wl_list_remove(&surface->pending_buffer_destroy_listener.link);
+
+  surface->pending.buffer = NULL;
+  surface->pending.newly_attached = false;
+}
 
 static void
 zms_surface_handle_destroy(struct wl_resource *resource)
@@ -124,6 +136,10 @@ zms_surface_protocol_commit(
   struct zms_surface *surface;
 
   surface = wl_resource_get_user_data(resource);
+
+  zms_view_commit(surface->view);
+
+  zms_surface_clear_pending_buffer(surface);
 
   wl_list_insert_list(
       &surface->frame_callback_list, &surface->pending.frame_callback_list);
@@ -306,14 +322,4 @@ zms_surface_send_frame_done(struct zms_surface *surface, uint32_t time)
     wl_resource_destroy(frame_callback->resource);
   }
   wl_client_flush(wl_resource_get_client(surface->resource));
-}
-
-ZMS_EXPORT void
-zms_surface_clear_pending_buffer(struct zms_surface *surface)
-{
-  if (surface->pending.buffer)
-    wl_list_remove(&surface->pending_buffer_destroy_listener.link);
-
-  surface->pending.buffer = NULL;
-  surface->pending.newly_attached = false;
 }
