@@ -39,12 +39,11 @@ struct zms_output_private {
   pixman_image_t* bg_image;
 };
 
-void zms_output_map_view(struct zms_output* output, struct zms_view* view,
+void zms_output_map_view(struct zms_output* output,
+    struct zms_view* view /* must have image */,
     enum zms_output_view_layer_index layer_index);
 
 void zms_output_unmap_view(struct zms_output* output, struct zms_view* view);
-
-void zms_output_update_view(struct zms_output* output, struct zms_view* view);
 
 void zms_output_render(struct zms_output* output, pixman_region32_t* damage);
 
