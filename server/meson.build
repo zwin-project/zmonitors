@@ -17,6 +17,7 @@ srcs_zmonitors_server = [
   'seat.c',
   'surface.c',
   'view.c',
+  'view-layer.c',
   'xdg-surface.c',
   'xdg-toplevel.c',
   'xdg-wm-base.c',
