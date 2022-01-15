@@ -12,10 +12,10 @@ struct zms_xdg_surface {
   struct zms_surface *surface; /* nonnull */
 
   /* listeners */
-  struct wl_listener surface_destroy_listener;
+  struct zms_listener surface_destroy_listener;
 
   /* signals */
-  struct wl_signal destroy_signal;
+  struct zms_signal destroy_signal;
 };
 
 struct zms_xdg_surface *zms_xdg_surface_create(

@@ -13,6 +13,7 @@ enum zms_surface_role {
   SURFACE_ROLE_NONE = 0,
   SURFACE_ROLE_XDG_TOPLEVEL,
   SURFACE_ROLE_XDG_POPUP,
+  SURFACE_ROLE_CURSOR,
 };
 
 struct zms_surface {
@@ -36,8 +37,8 @@ struct zms_surface {
   enum zms_surface_role role;
 
   // signals
-  struct wl_signal commit_signal;
-  struct wl_signal destroy_signal;
+  struct zms_signal commit_signal;
+  struct zms_signal destroy_signal;
 
   // listeners
   struct wl_listener pending_buffer_destroy_listener;
