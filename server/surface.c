@@ -129,7 +129,7 @@ zms_surface_protocol_commit(
       &surface->frame_callback_list, &surface->pending.frame_callback_list);
   wl_list_init(&surface->pending.frame_callback_list);
 
-  wl_signal_emit(&surface->commit_signal, NULL);
+  zms_signal_emit(&surface->commit_signal, NULL);
 }
 
 static void
@@ -221,8 +221,8 @@ zms_surface_create(
   surface->pending.newly_attached = false;
   wl_list_init(&surface->pending.frame_callback_list);
   wl_list_init(&surface->frame_callback_list);
-  wl_signal_init(&surface->commit_signal);
-  wl_signal_init(&surface->destroy_signal);
+  zms_signal_init(&surface->commit_signal);
+  zms_signal_init(&surface->destroy_signal);
 
   surface->pending_buffer_destroy_listener.notify =
       zms_surface_pending_buffer_destroy_handler;
@@ -253,7 +253,7 @@ zms_surface_destroy(struct zms_surface *surface)
 
   if (surface->pending.buffer)
     wl_list_remove(&surface->pending_buffer_destroy_listener.link);
-  wl_signal_emit(&surface->destroy_signal, NULL);
+  zms_signal_emit(&surface->destroy_signal, NULL);
   zms_view_destroy(surface->view);
   free(surface);
 }
@@ -270,6 +270,9 @@ role_to_role_name(enum zms_surface_role role)
 
     case SURFACE_ROLE_XDG_TOPLEVEL:
       return "xdg_toplevel";
+
+    case SURFACE_ROLE_CURSOR:
+      return "cursor";
   }
   assert(false && "not reached");
 }

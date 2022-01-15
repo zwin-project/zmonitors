@@ -24,8 +24,8 @@ struct zms_xdg_toplevel {
   } pending;
 
   /* listeners */
-  struct wl_listener surface_commit_listener;
-  struct wl_listener xdg_surface_destroy_listener;
+  struct zms_listener surface_commit_listener;
+  struct zms_listener xdg_surface_destroy_listener;
 
   bool committed;
 };

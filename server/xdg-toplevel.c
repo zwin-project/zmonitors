@@ -227,7 +227,7 @@ zms_xdg_toplevel_send_configure(struct zms_xdg_toplevel *toplevel)
 }
 
 static void
-surface_commit_signal_handler(struct wl_listener *listener, void *data)
+surface_commit_signal_handler(struct zms_listener *listener, void *data)
 {
   Z_UNUSED(data);
   struct zms_xdg_toplevel *toplevel;
@@ -265,7 +265,7 @@ surface_commit_signal_handler(struct wl_listener *listener, void *data)
 }
 
 static void
-xdg_surface_destroy_signal_handler(struct wl_listener *listener, void *data)
+xdg_surface_destroy_signal_handler(struct zms_listener *listener, void *data)
 {
   Z_UNUSED(data);
 
@@ -310,12 +310,12 @@ zms_xdg_toplevel_create(
   // toplevel->pending was initalized by zalloc
 
   toplevel->surface_commit_listener.notify = surface_commit_signal_handler;
-  wl_signal_add(
+  zms_signal_add(
       &xdg_surface->surface->commit_signal, &toplevel->surface_commit_listener);
 
   toplevel->xdg_surface_destroy_listener.notify =
       xdg_surface_destroy_signal_handler;
-  wl_signal_add(
+  zms_signal_add(
       &xdg_surface->destroy_signal, &toplevel->xdg_surface_destroy_listener);
 
   toplevel->committed = false;

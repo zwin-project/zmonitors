@@ -86,7 +86,7 @@ static const struct xdg_surface_interface zms_xdg_surface_interface = {
 };
 
 static void
-surface_destroy_signal_handler(struct wl_listener *listener, void *data)
+surface_destroy_signal_handler(struct zms_listener *listener, void *data)
 {
   Z_UNUSED(data);
 
@@ -123,9 +123,9 @@ zms_xdg_surface_create(
   xdg_surface->resource = resource;
   xdg_surface->surface = surface;
   xdg_surface->surface_destroy_listener.notify = surface_destroy_signal_handler;
-  wl_signal_add(
+  zms_signal_add(
       &surface->destroy_signal, &xdg_surface->surface_destroy_listener);
-  wl_signal_init(&xdg_surface->destroy_signal);
+  zms_signal_init(&xdg_surface->destroy_signal);
 
   return xdg_surface;
 
@@ -139,7 +139,7 @@ err:
 static void
 zms_xdg_surface_destroy(struct zms_xdg_surface *xdg_surface)
 {
-  wl_signal_emit(&xdg_surface->destroy_signal, NULL);
+  zms_signal_emit(&xdg_surface->destroy_signal, NULL);
   wl_list_remove(&xdg_surface->surface_destroy_listener.link);
   free(xdg_surface);
 }
