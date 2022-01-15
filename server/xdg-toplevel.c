@@ -251,7 +251,8 @@ surface_commit_signal_handler(struct wl_listener *listener, void *data)
     zms_view_commit(view);
     struct zms_output *primary_output =
         zms_compositor_get_primary_output(surface->compositor);
-    zms_output_map_view(primary_output, surface->view);
+    zms_output_map_view(
+        primary_output, surface->view, ZMS_OUTPUT_MAIN_LAYER_INDEX);
   } else if (surface->pending.buffer && zms_view_is_mapped(view)) {
     zms_view_commit(view);
     zms_output_update_view(view->priv->output, view);

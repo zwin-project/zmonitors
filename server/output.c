@@ -188,7 +188,10 @@ zms_output_create(struct zms_compositor* compositor,
   priv->image = image;
   pixman_region32_init_rect(&priv->region, 0, 0, size.width, size.height);
   wl_list_init(&priv->resource_list);
-  wl_list_init(&priv->view_list);
+
+  for (int i = 0; i < ZMS_OUTPUT_VIEW_LAYER_COUNT; i++)
+    zms_view_layer_init(&priv->layers[i]);
+
   priv->bg_buffer = bg_buffer;
   priv->bg_image = bg_image;
 
@@ -225,6 +228,7 @@ ZMS_EXPORT void
 zms_output_destroy(struct zms_output* output)
 {
   struct wl_resource *resource, *tmp;
+  // TODO: move mapped views to another output
 
   wl_resource_for_each_safe(resource, tmp, &output->priv->resource_list)
   {
@@ -260,8 +264,9 @@ ZMS_EXPORT void
 zms_output_frame(struct zms_output* output, uint32_t time)
 {
   struct zms_view_private* view_priv;
-  wl_list_for_each(view_priv, &output->priv->view_list, link)
-      zms_surface_send_frame_done(view_priv->surface, time);
+  for (int i = 0; i < ZMS_OUTPUT_VIEW_LAYER_COUNT; i++)
+    zms_view_layer_for_each(view_priv, &output->priv->layers[i])
+        zms_surface_send_frame_done(view_priv->surface, time);
 }
 
 ZMS_EXPORT int
@@ -271,14 +276,16 @@ zms_output_get_fd(struct zms_output* output)
 }
 
 ZMS_EXPORT void
-zms_output_map_view(struct zms_output* output, struct zms_view* view)
+zms_output_map_view(struct zms_output* output, struct zms_view* view,
+    enum zms_output_view_layer_index layer_index)
 {
   pixman_region32_t damage;
 
   if (view->priv->output) zms_output_unmap_view(view->priv->output, view);
 
   view->priv->output = output;
-  wl_list_insert(output->priv->view_list.prev, &view->priv->link);
+  wl_list_insert(
+      &output->priv->layers[layer_index].view_list, &view->priv->link);
 
   zms_view_set_origin(view,
       (output->priv->size.width - zms_view_get_width(view)) / 2,
@@ -338,7 +345,8 @@ zms_output_render(struct zms_output* output, pixman_region32_t* damage)
 
   pixman_image_set_clip_region32(output->priv->image, NULL);
 
-  wl_list_for_each(view_priv, &output->priv->view_list, link)
+  wl_list_for_each_reverse(view_priv,
+      &output->priv->layers[ZMS_OUTPUT_MAIN_LAYER_INDEX].view_list, link)
   {
     pixman_region32_t view_region, repaint_region;
     pixman_transform_t transform;
@@ -379,7 +387,8 @@ zms_output_pick_view(
 {
   struct zms_view_private* view_priv;
   struct zms_view* view;
-  wl_list_for_each_reverse(view_priv, &output->priv->view_list, link)
+  wl_list_for_each(view_priv,
+      &output->priv->layers[ZMS_OUTPUT_MAIN_LAYER_INDEX].view_list, link)
   {
     view = view_priv->pub;
     if (zms_view_contains(view, x, y, vx, vy)) return view;
