@@ -4,6 +4,7 @@
 #include <zmonitors-server.h>
 
 #include "surface.h"
+#include "xdg-positioner.h"
 #include "xdg-surface.h"
 
 static void
@@ -18,11 +19,8 @@ static void
 zms_wm_base_protocol_create_positioner(
     struct wl_client *client, struct wl_resource *resource, uint32_t id)
 {
-  // TODO:
-  zms_log("request not implemented yet: xdg_wm_base.create_positioner\n");
-  Z_UNUSED(client);
   Z_UNUSED(resource);
-  Z_UNUSED(id);
+  zms_xdg_positioner_create(client, id);
 }
 
 static void

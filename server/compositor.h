@@ -4,11 +4,13 @@
 #include <wayland-server.h>
 #include <zmonitors-server.h>
 
+#include "data-device-manager.h"
 #include "xdg-wm-base.h"
 
 struct zms_compositor_private {
   /* global objects */
   struct zms_wm_base* wm_base;
+  struct zms_data_device_manager* data_device_manager;
 
   struct wl_list output_list;
 };
