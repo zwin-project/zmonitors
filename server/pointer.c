@@ -1,9 +1,12 @@
 #include "pointer.h"
 
+#include <pixman-1/pixman.h>
 #include <zmonitors-util.h>
 
+#include "cursor-sprite.h"
 #include "output.h"
 #include "pointer-client.h"
+#include "seat.h"
 #include "view.h"
 
 static void
@@ -28,13 +31,14 @@ static void
 default_grab_focus(struct zms_pointer_grab* grab)
 {
   struct zms_pointer* pointer = grab->pointer;
-  struct zms_view* view;
-  float vx, vy;
+  struct zms_view* view = NULL;
+  float vx = 0, vy = 0;
 
-  if (!pointer->output || pointer->button_count > 0) return;
+  if (pointer->button_count > 0) return;
 
-  view =
-      zms_output_pick_view(pointer->output, pointer->x, pointer->y, &vx, &vy);
+  if (pointer->output)
+    view =
+        zms_output_pick_view(pointer->output, pointer->x, pointer->y, &vx, &vy);
 
   zms_pointer_set_focus(pointer, view, vx, vy);
 }
@@ -103,7 +107,9 @@ zms_pointer_create(struct zms_seat* seat)
   pointer->default_grab.pointer = pointer;
   wl_list_init(&pointer->point_client_list);
   zms_weak_ref_init(&pointer->focus_view_ref);
+  zms_weak_ref_init(&pointer->sprite_ref);
   zms_signal_init(&pointer->destroy_signal);
+  zms_signal_init(&pointer->moved_signal);
 
   return pointer;
 
@@ -117,6 +123,7 @@ zms_pointer_destroy(struct zms_pointer* pointer)
   pointer->grab->interface->cancel(pointer->grab);
   zms_signal_emit(&pointer->destroy_signal, NULL);
   zms_weak_reference(&pointer->focus_view_ref, NULL, NULL);
+  zms_weak_reference(&pointer->sprite_ref, NULL, NULL);
   free(pointer);
 }
 
@@ -126,6 +133,7 @@ zms_pointer_set_focus(struct zms_pointer* pointer,
 {
   struct zms_view* current_focus = pointer->focus_view_ref.data;
   struct wl_client* client;
+  struct wl_display* display = pointer->seat->priv->compositor->display;
 
   pointer->vx = vx;
   pointer->vy = vy;
@@ -134,8 +142,11 @@ zms_pointer_set_focus(struct zms_pointer* pointer,
 
   if (current_focus) {
     struct zms_pointer_client* pointer_client;
+    pointer->enter_serial = 0;
+
     client = wl_resource_get_client(current_focus->priv->surface->resource);
     pointer_client = zms_pointer_client_find(client, pointer);
+    zms_pointer_set_cursor(pointer, NULL, 0, 0);
     if (pointer_client) {
       zms_pointer_client_send_leave(
           pointer_client, current_focus->priv->surface);
@@ -144,15 +155,19 @@ zms_pointer_set_focus(struct zms_pointer* pointer,
 
   if (view) {
     struct zms_pointer_client* pointer_client;
+    uint32_t serial = wl_display_next_serial(display);
+    pointer->enter_serial = serial;
+
     client = wl_resource_get_client(view->priv->surface->resource);
     pointer_client = zms_pointer_client_find(client, pointer);
     if (pointer_client) {
       zms_pointer_client_send_enter(
-          pointer_client, view->priv->surface, vx, vy);
+          pointer_client, serial, view->priv->surface, vx, vy);
     }
   }
 
-  zms_weak_reference(&pointer->focus_view_ref, view, &view->unmap_signal);
+  zms_weak_reference(
+      &pointer->focus_view_ref, view, view ? &view->unmap_signal : NULL);
 }
 
 ZMS_EXPORT void
@@ -162,9 +177,10 @@ zms_pointer_move_to(
   pointer->output = output;
   pointer->x = x;
   pointer->y = y;
-  // TODO: update cursor pos
 
   pointer->grab->interface->focus(pointer->grab);
+
+  zms_signal_emit(&pointer->moved_signal, NULL);
 }
 
 ZMS_EXPORT bool
@@ -189,4 +205,28 @@ zms_pointer_end_grab(struct zms_pointer* pointer)
 {
   pointer->grab = &pointer->default_grab;
   pointer->grab->interface->focus(pointer->grab);
+}
+
+ZMS_EXPORT void
+zms_pointer_set_cursor(struct zms_pointer* pointer,
+    struct zms_surface* surface /*nullable*/, int32_t hotspot_x,
+    int32_t hotspot_y)
+{
+  struct zms_cursor_sprite *current_sprite, *sprite;
+
+  current_sprite = pointer->sprite_ref.data;
+
+  if (surface && current_sprite && current_sprite->surface == surface) {
+    zms_cursor_sprite_update_hotspot(current_sprite, hotspot_x, hotspot_y);
+  } else {
+    if (current_sprite) {
+      zms_cursor_sprite_destroy(current_sprite);
+      zms_weak_reference(&pointer->sprite_ref, NULL, NULL);
+    }
+
+    if (surface) {
+      sprite = zms_cursor_sprite_create(pointer, surface, hotspot_x, hotspot_y);
+      zms_weak_reference(&pointer->sprite_ref, sprite, &sprite->destroy_signal);
+    }
+  }
 }

@@ -8,6 +8,7 @@ deps_zmonitors_server = [
 srcs_zmonitors_server = [
   'buffer.c',
   'compositor.c',
+  'cursor-sprite.c',
   'frame-callback.c',
   'move-grab.c',
   'pointer.c',

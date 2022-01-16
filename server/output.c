@@ -328,36 +328,39 @@ zms_output_render(struct zms_output* output, pixman_region32_t* damage)
 
   pixman_image_set_clip_region32(output->priv->image, NULL);
 
-  wl_list_for_each_reverse(view_priv,
-      &output->priv->layers[ZMS_OUTPUT_MAIN_LAYER_INDEX].view_list, link)
-  {
-    pixman_region32_t view_region, repaint_region;
-    pixman_transform_t transform;
-    view = view_priv->pub;
+  for (int i = ZMS_OUTPUT_MAIN_LAYER_INDEX; i >= ZMS_OUTPUT_CURSOR_LAYER_INDEX;
+       i--) {
+    wl_list_for_each_reverse(
+        view_priv, &output->priv->layers[i].view_list, link)
+    {
+      pixman_region32_t view_region, repaint_region;
+      pixman_transform_t transform;
+      view = view_priv->pub;
 
-    pixman_region32_init_view_global(&view_region, view);
-    pixman_region32_init(&repaint_region);
-    pixman_region32_intersect(&repaint_region, damage, &view_region);
+      pixman_region32_init_view_global(&view_region, view);
+      pixman_region32_init(&repaint_region);
+      pixman_region32_intersect(&repaint_region, damage, &view_region);
 
-    pixman_transform_init_view_global(&transform, view);
+      pixman_transform_init_view_global(&transform, view);
 
-    pixman_image_set_clip_region32(output->priv->image, &repaint_region);
+      pixman_image_set_clip_region32(output->priv->image, &repaint_region);
 
-    pixman_image_set_transform(view->priv->image, &transform);
+      pixman_image_set_transform(view->priv->image, &transform);
 
-    wl_shm_buffer_begin_access(
-        wl_shm_buffer_get(view->priv->buffer_ref.buffer->resource));
+      wl_shm_buffer_begin_access(
+          wl_shm_buffer_get(view->priv->buffer_ref.buffer->resource));
 
-    pixman_image_composite32(PIXMAN_OP_OVER, view->priv->image, NULL,
-        output->priv->image, 0, 0, 0, 0, 0, 0, size.width, size.height);
+      pixman_image_composite32(PIXMAN_OP_OVER, view->priv->image, NULL,
+          output->priv->image, 0, 0, 0, 0, 0, 0, size.width, size.height);
 
-    wl_shm_buffer_end_access(
-        wl_shm_buffer_get(view->priv->buffer_ref.buffer->resource));
+      wl_shm_buffer_end_access(
+          wl_shm_buffer_get(view->priv->buffer_ref.buffer->resource));
 
-    pixman_image_set_clip_region32(output->priv->image, NULL);
+      pixman_image_set_clip_region32(output->priv->image, NULL);
 
-    pixman_region32_fini(&view_region);
-    pixman_region32_fini(&repaint_region);
+      pixman_region32_fini(&view_region);
+      pixman_region32_fini(&repaint_region);
+    }
   }
 
   if (output->priv->interface)
