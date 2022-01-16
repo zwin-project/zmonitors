@@ -3,6 +3,7 @@
 #include <xdg-shell-server-protocol.h>
 #include <zmonitors-server.h>
 
+#include "xdg-popup.h"
 #include "xdg-toplevel.h"
 
 static void zms_xdg_surface_destroy(struct zms_xdg_surface *xdg_surface);
@@ -42,13 +43,10 @@ zms_xdg_surface_protocol_get_popup(struct wl_client *client,
     struct wl_resource *resource, uint32_t id, struct wl_resource *parent,
     struct wl_resource *positioner)
 {
-  // TODO:
-  zms_log("request not implemented yet: xdg_surface.get_popup\n");
-  Z_UNUSED(client);
   Z_UNUSED(resource);
-  Z_UNUSED(id);
   Z_UNUSED(parent);
   Z_UNUSED(positioner);
+  zms_xdg_popup_create(client, id);
 }
 
 static void
