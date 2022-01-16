@@ -1,5 +1,6 @@
 #include "pointer-client.h"
 
+#include "cursor-sprite.h"
 #include "seat.h"
 #include "surface.h"
 
@@ -15,18 +16,30 @@ zms_pointer_client_handle_destroy(struct wl_resource *resource)
 static void
 zms_pointer_client_protocol_set_cursor(struct wl_client *client,
     struct wl_resource *resource, uint32_t serial,
-    struct wl_resource *surface_resource, int32_t hotspot_x, int32_t hotspot_y)
+    struct wl_resource *surface_resource /* nullable */, int32_t hotspot_x,
+    int32_t hotspot_y)
 {
-  zms_log("request not implemented yet: wl_pointer.set_cursor\n");
   Z_UNUSED(client);
   Z_UNUSED(serial);
-  Z_UNUSED(surface_resource);
-  Z_UNUSED(hotspot_x);
-  Z_UNUSED(hotspot_y);
   struct zms_pointer_client *pointer_client =
       wl_resource_get_user_data(resource);
+  struct zms_pointer *pointer;
+  struct zms_surface *surface = NULL;
+  struct zms_view *focus_view;
+
   if (pointer_client == NULL) return; /* inert resource */
-  // TODO:
+
+  pointer = pointer_client->pointer;
+  focus_view = pointer->focus_view_ref.data;
+
+  if (focus_view == NULL) return;
+
+  if (surface_resource) surface = wl_resource_get_user_data(surface_resource);
+
+  if (wl_resource_get_client(focus_view->priv->surface->resource) != client)
+    return;
+
+  zms_pointer_set_cursor(pointer, surface, hotspot_x, hotspot_y);
 }
 
 static void
@@ -196,12 +209,9 @@ zms_pointer_client_send_leave(
 
 ZMS_EXPORT void
 zms_pointer_client_send_enter(struct zms_pointer_client *pointer_client,
-    struct zms_surface *surface, float vx, float vy)
+    uint32_t serial, struct zms_surface *surface, float vx, float vy)
 {
   struct wl_resource *resource;
-  struct wl_display *display =
-      pointer_client->pointer->seat->priv->compositor->display;
-  uint32_t serial = wl_display_next_serial(display);
 
   wl_resource_for_each(resource, &pointer_client->resource_list)
       wl_pointer_send_enter(resource, serial, surface->resource,

@@ -28,6 +28,7 @@ zms_move_grab_motion_abs(struct zms_pointer_grab* grab,
 {
   Z_UNUSED(time);
   struct zms_move_grab* move_grab = wl_container_of(grab, move_grab, base);
+  zms_pointer_move_to(grab->pointer, output, pos[0], pos[1]);
 
   pixman_region32_t damage;
   pixman_region32_t old_view_region;

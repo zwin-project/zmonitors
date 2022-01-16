@@ -34,7 +34,7 @@ void zms_pointer_client_send_leave(
     struct zms_pointer_client* pointer_client, struct zms_surface* surface);
 
 void zms_pointer_client_send_enter(struct zms_pointer_client* pointer_client,
-    struct zms_surface* surface, float vx, float vy);
+    uint32_t serial, struct zms_surface* surface, float vx, float vy);
 
 void zms_pointer_client_send_motion(struct zms_pointer_client* pointer_client,
     uint32_t time, float vx, float vy);

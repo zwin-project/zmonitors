@@ -225,7 +225,9 @@ zms_seat_notify_pointer_leave(struct zms_seat* seat)
 
   struct zms_pointer* pointer = seat->priv->pointer;
 
-  if (pointer) pointer->grab->interface->cancel(pointer->grab);
+  if (pointer == NULL) return;
+
+  pointer->grab->interface->cancel(pointer->grab);
 
   zms_pointer_move_to(pointer, NULL, 0, 0);
 

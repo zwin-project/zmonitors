@@ -250,7 +250,7 @@ surface_commit_signal_handler(struct zms_listener *listener, void *data)
         zms_compositor_get_primary_output(surface->compositor);
     zms_view_set_origin(view,
         (primary_output->priv->size.width - zms_view_get_width(view)) / 2,
-        (primary_output->priv->size.height - zms_view_get_height(view) / 2));
+        (primary_output->priv->size.height - zms_view_get_height(view)) / 2);
     zms_output_map_view(
         primary_output, surface->view, ZMS_OUTPUT_MAIN_LAYER_INDEX);
   }

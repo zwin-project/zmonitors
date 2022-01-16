@@ -57,6 +57,8 @@ ray_motion(
     zms_seat_notify_pointer_motion_abs(
         screen->monitor->compositor->seat, screen->output, pos, time);
   } else {
+    if (screen->ray_focus)
+      zms_seat_notify_pointer_leave(screen->monitor->compositor->seat);
     screen->ray_focus = false;
   }
 
@@ -69,9 +71,10 @@ ray_leave(struct zms_ui_base* ui_base, uint32_t serial)
   Z_UNUSED(serial);
   struct zms_screen* screen = ui_base->user_data;
 
-  zms_seat_notify_pointer_leave(screen->monitor->compositor->seat);
-
   screen->ray_focus = false;
+
+  if (screen->ray_focus)
+    zms_seat_notify_pointer_leave(screen->monitor->compositor->seat);
 
   return true;
 }
