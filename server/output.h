@@ -27,10 +27,7 @@ struct zms_output_private {
   char* manufacturer;
   char* model;
 
-  int fd;
-  struct zms_bgra* buffer;
-  pixman_image_t* image;
-  pixman_region32_t region;
+  int back_buffer_index;
 
   struct wl_list resource_list;
   struct zms_view_layer layers[ZMS_OUTPUT_VIEW_LAYER_COUNT];

@@ -17,6 +17,7 @@ srcs_zmonitors_server = [
   'pointer.c',
   'pointer-client.c',
   'output.c',
+  'pixel-buffer.c',
   'region.c',
   'seat.c',
   'surface.c',

@@ -97,13 +97,13 @@ static void
 ui_setup(struct zms_ui_base* ui_base)
 {
   struct zms_screen* screen = ui_base->user_data;
+  struct zms_screen_size screen_size = screen->monitor->screen_size;
   struct zms_backend* backend = screen->monitor->backend;
   struct zms_opengl_component* component;
   struct zms_opengl_shader_program* shader;
   struct zms_opengl_vertex_buffer* vertex_buffer;
-  struct zms_opengl_texture* texture;
+  struct zms_pixel_buffer* pixel_buffer;
   mat4 transform;
-  int output_fd;
 
   zms_screen_calculate_corner_points(screen);
 
@@ -124,10 +124,12 @@ ui_setup(struct zms_ui_base* ui_base)
   vertex_buffer =
       zms_opengl_vertex_buffer_create(backend, sizeof(struct vertex_buffer));
 
-  output_fd = zms_output_get_fd(screen->output);
-
-  texture = zms_opengl_texture_create_by_fd(
-      backend, output_fd, screen->monitor->screen_size);
+  for (int i = 0; i < screen->output->pixel_buffer_count; i++) {
+    struct zms_pixel_buffer* pb = screen->output->pixel_buffers[i];
+    screen->textures[i] =
+        zms_opengl_texture_create_by_fd(backend, pb->fd, screen_size);
+    pb->user_data = screen->textures[i];
+  }
 
   {
     int fd = zms_opengl_vertex_buffer_get_fd(vertex_buffer);
@@ -148,7 +150,8 @@ ui_setup(struct zms_ui_base* ui_base)
 
   zms_opengl_component_attach_vertex_buffer(component, vertex_buffer);
   zms_opengl_component_attach_shader_program(component, shader);
-  zms_opengl_component_attach_texture(component, texture);
+  pixel_buffer = zms_output_buffer_ring_rotate(screen->output);
+  zms_opengl_component_attach_texture(component, pixel_buffer->user_data);
 
   zms_opengl_component_add_vertex_attribute(component, 0, 3,
       ZGN_OPENGL_VERTEX_ATTRIBUTE_TYPE_FLOAT, false, sizeof(struct vertex), 0);
@@ -159,14 +162,16 @@ ui_setup(struct zms_ui_base* ui_base)
   screen->component = component;
   screen->shader = shader;
   screen->vertex_buffer = vertex_buffer;
-  screen->texture = texture;
 }
 
 static void
 ui_teardown(struct zms_ui_base* ui_base)
 {
   struct zms_screen* screen = ui_base->user_data;
-  zms_opengl_texture_destroy(screen->texture);
+
+  for (int i = 0; i < screen->output->pixel_buffer_count; i++)
+    zms_opengl_texture_destroy(screen->textures[i]);
+
   zms_opengl_vertex_buffer_destroy(screen->vertex_buffer);
   zms_opengl_shader_program_destroy(screen->shader);
   zms_opengl_component_destroy(screen->component);
@@ -193,7 +198,14 @@ static void
 ui_repaint(struct zms_ui_base* ui_base)
 {
   struct zms_screen* screen = ui_base->user_data;
+  struct zms_pixel_buffer* pixel_buffer;
+  struct zms_opengl_texture* texture;
+
   if (screen->texture_changed) {
+    pixel_buffer = zms_output_buffer_ring_rotate(screen->output);
+    texture = pixel_buffer->user_data;
+
+    zms_opengl_component_attach_texture(screen->component, texture);
     zms_opengl_component_texture_updated(screen->component);
     screen->texture_changed = false;
   }
@@ -237,6 +249,7 @@ zms_screen_create(struct zms_monitor* monitor)
   struct zms_ui_base* base;
   struct zms_output* output;
   struct zms_ui_base* parent = monitor->ui_root->base;
+  struct zms_opengl_texture** textures;
   vec2 physical_size;
 
   screen = zalloc(sizeof *screen);
@@ -252,14 +265,21 @@ zms_screen_create(struct zms_monitor* monitor)
   if (output == NULL) goto err_output;
   zms_output_set_implementation(output, screen, &output_interface);
 
+  textures = zalloc(sizeof(*textures) * output->pixel_buffer_count);
+  if (textures == NULL) goto err_textures;
+
   screen->base = base;
   screen->monitor = monitor;
   screen->output = output;
+  screen->textures = textures;
 
   screen->texture_changed = false;
   screen->ray_focus = false;
 
   return screen;
+
+err_textures:
+  zms_output_destroy(output);
 
 err_output:
   zms_ui_base_destroy(base);
@@ -276,5 +296,6 @@ zms_screen_destroy(struct zms_screen* screen)
 {
   zms_output_destroy(screen->output);
   zms_ui_base_destroy(screen->base);
+  free(screen->textures);
   free(screen);
 }

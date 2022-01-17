@@ -1,11 +1,13 @@
 #include "output.h"
 
+#include <pixman-1/pixman.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <zmonitors-server.h>
 
 #include "compositor.h"
 #include "math.h"
+#include "pixel-buffer.h"
 #include "pixman-helper.h"
 #include "string.h"
 #include "surface.h"
@@ -121,10 +123,14 @@ zms_output_create(struct zms_compositor* compositor,
   struct zms_output* output;
   struct zms_output_private* priv;
   struct wl_global* global;
-  int fd;
   size_t buffer_size;
-  struct zms_bgra *buffer, *bg_buffer;
-  pixman_image_t *image, *bg_image;
+  struct zms_bgra* bg_buffer;
+  pixman_image_t* bg_image;
+  pixman_region32_t output_region;
+  int pixel_buffer_count = 2;
+  struct zms_pixel_buffer** pixel_buffers;
+
+  buffer_size = size.width * size.height * sizeof(struct zms_bgra);
 
   output = zalloc(sizeof *output);
   if (output == NULL) {
@@ -138,24 +144,12 @@ zms_output_create(struct zms_compositor* compositor,
     goto err_priv;
   }
 
-  buffer_size = size.width * size.height * sizeof(struct zms_bgra);
-  fd = zms_util_create_shared_fd(buffer_size, "zmonitors-output");
-  if (fd < 0) {
-    zms_log("failed to create shared fd\n");
-    goto err_fd;
-  }
+  pixel_buffers = zalloc(sizeof(*pixel_buffers) * pixel_buffer_count);
+  if (pixel_buffers == NULL) goto err_pixel_buffers;
 
-  buffer = mmap(NULL, buffer_size, PROT_WRITE, MAP_SHARED, fd, 0);
-  if (buffer == MAP_FAILED) {
-    zms_log("failed to mmap\n");
-    goto err_mmap;
-  }
-
-  image = pixman_image_create_bits(PIXMAN_a8r8g8b8, size.width, size.height,
-      (uint32_t*)buffer, size.width * sizeof(struct zms_bgra));
-  if (image == NULL) {
-    zms_log("failed to create pixman image\n");
-    goto err_image;
+  for (int i = 0; i < pixel_buffer_count; i++) {
+    pixel_buffers[i] = zms_pixel_buffer_create(size.width, size.height, NULL);
+    if (pixel_buffers[i] == NULL) goto err_pixel_buffer;
   }
 
   bg_buffer = malloc(buffer_size);
@@ -183,10 +177,7 @@ zms_output_create(struct zms_compositor* compositor,
   glm_vec3_copy(physical_size, priv->physical_size);
   priv->manufacturer = strdup(manufacturer);
   priv->model = strdup(model);
-  priv->fd = fd;
-  priv->buffer = buffer;
-  priv->image = image;
-  pixman_region32_init_rect(&priv->region, 0, 0, size.width, size.height);
+  priv->back_buffer_index = 0;
   wl_list_init(&priv->resource_list);
 
   for (int i = 0; i < ZMS_OUTPUT_VIEW_LAYER_COUNT; i++)
@@ -197,8 +188,14 @@ zms_output_create(struct zms_compositor* compositor,
 
   output->priv = priv;
   wl_list_insert(&compositor->priv->output_list, &output->link);
+  output->pixel_buffer_count = pixel_buffer_count;
+  output->pixel_buffers = pixel_buffers;
 
-  zms_output_render(output, &output->priv->region);
+  pixman_region32_init_rect(&output_region, 0, 0, size.width, size.height);
+
+  zms_output_render(output, &output_region);
+
+  pixman_region32_fini(&output_region);
 
   return output;
 
@@ -206,15 +203,13 @@ err_global:
   free(bg_buffer);
 
 err_bg:
-  pixman_image_unref(image);
+err_pixel_buffer:
+  for (int i = 0; i < pixel_buffer_count; i++)
+    zms_pixel_buffer_destroy(pixel_buffers[i]);
 
-err_image:
-  munmap(buffer, buffer_size);
+  free(pixel_buffers);
 
-err_mmap:
-  close(fd);
-
-err_fd:
+err_pixel_buffers:
   free(priv);
 
 err_priv:
@@ -237,14 +232,12 @@ zms_output_destroy(struct zms_output* output)
     wl_list_remove(wl_resource_get_link(resource));
   }
 
-  size_t buf_size = output->priv->size.width * output->priv->size.height *
-                    sizeof(struct zms_bgra);
-  munmap(output->priv->buffer, buf_size);
+  for (int i = 0; i < output->pixel_buffer_count; i++)
+    zms_pixel_buffer_destroy(output->pixel_buffers[i]);
 
   wl_list_remove(&output->link);
   wl_global_destroy(output->priv->global);
-  pixman_image_unref(output->priv->image);
-  close(output->priv->fd);
+  free(output->pixel_buffers);
   free(output->priv->bg_buffer);
   free(output->priv->model);
   free(output->priv->manufacturer);
@@ -260,6 +253,25 @@ zms_output_set_implementation(struct zms_output* output, void* user_data,
   output->priv->interface = interface;
 }
 
+ZMS_EXPORT struct zms_pixel_buffer*
+zms_output_buffer_ring_rotate(struct zms_output* output)
+{
+  struct zms_pixel_buffer *front, *back;
+
+  front = output->pixel_buffers[output->priv->back_buffer_index];
+
+  output->priv->back_buffer_index++;
+  if (output->priv->back_buffer_index == output->pixel_buffer_count)
+    output->priv->back_buffer_index = 0;
+
+  back = output->pixel_buffers[output->priv->back_buffer_index];
+
+  // FIXME: dont need to do this if texture damage request exists
+  memcpy(back->priv->buffer, front->priv->buffer, back->size);
+
+  return front;
+}
+
 ZMS_EXPORT void
 zms_output_frame(struct zms_output* output, uint32_t time)
 {
@@ -267,12 +279,6 @@ zms_output_frame(struct zms_output* output, uint32_t time)
   for (int i = 0; i < ZMS_OUTPUT_VIEW_LAYER_COUNT; i++)
     zms_view_layer_for_each(view_priv, &output->priv->layers[i])
         zms_surface_send_frame_done(view_priv->surface, time);
-}
-
-ZMS_EXPORT int
-zms_output_get_fd(struct zms_output* output)
-{
-  return output->priv->fd;
 }
 
 ZMS_EXPORT void
@@ -320,13 +326,15 @@ zms_output_render(struct zms_output* output, pixman_region32_t* damage)
   struct zms_view_private* view_priv;
   struct zms_view* view;
   struct zms_screen_size size = output->priv->size;
+  pixman_image_t* target_image =
+      output->pixel_buffers[output->priv->back_buffer_index]->priv->image;
 
-  pixman_image_set_clip_region32(output->priv->image, damage);
+  pixman_image_set_clip_region32(target_image, damage);
 
   pixman_image_composite32(PIXMAN_OP_SRC, output->priv->bg_image, NULL,
-      output->priv->image, 0, 0, 0, 0, 0, 0, size.width, size.height);
+      target_image, 0, 0, 0, 0, 0, 0, size.width, size.height);
 
-  pixman_image_set_clip_region32(output->priv->image, NULL);
+  pixman_image_set_clip_region32(target_image, NULL);
 
   for (int i = ZMS_OUTPUT_MAIN_LAYER_INDEX; i >= ZMS_OUTPUT_CURSOR_LAYER_INDEX;
        i--) {
@@ -343,7 +351,7 @@ zms_output_render(struct zms_output* output, pixman_region32_t* damage)
 
       pixman_transform_init_view_global(&transform, view);
 
-      pixman_image_set_clip_region32(output->priv->image, &repaint_region);
+      pixman_image_set_clip_region32(target_image, &repaint_region);
 
       pixman_image_set_transform(view->priv->image, &transform);
 
@@ -351,12 +359,12 @@ zms_output_render(struct zms_output* output, pixman_region32_t* damage)
           wl_shm_buffer_get(view->priv->buffer_ref.buffer->resource));
 
       pixman_image_composite32(PIXMAN_OP_OVER, view->priv->image, NULL,
-          output->priv->image, 0, 0, 0, 0, 0, 0, size.width, size.height);
+          target_image, 0, 0, 0, 0, 0, 0, size.width, size.height);
 
       wl_shm_buffer_end_access(
           wl_shm_buffer_get(view->priv->buffer_ref.buffer->resource));
 
-      pixman_image_set_clip_region32(output->priv->image, NULL);
+      pixman_image_set_clip_region32(target_image, NULL);
 
       pixman_region32_fini(&view_region);
       pixman_region32_fini(&repaint_region);
