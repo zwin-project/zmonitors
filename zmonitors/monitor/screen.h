@@ -12,7 +12,7 @@ struct zms_screen {
   struct zms_opengl_component *component;
   struct zms_opengl_shader_program *shader;
   struct zms_opengl_vertex_buffer *vertex_buffer;
-  struct zms_opengl_texture *texture;
+  struct zms_opengl_texture **textures;
 
   bool texture_changed;
   bool ray_focus;
