@@ -61,7 +61,6 @@ zms_compositor_create()
   struct wl_display* display;
   struct wl_global* global;
   struct zms_wm_base* wm_base;
-  struct zms_data_device_manager* data_device_manager;
   struct zms_seat* seat;
   const char* socket;
 
@@ -113,12 +112,6 @@ zms_compositor_create()
     goto err_global;
   }
 
-  data_device_manager = zms_data_device_manager_create(compositor);
-  if (data_device_manager == NULL) {
-    zms_log("failed to create a data_device_manager\n");
-    goto err_data_device_manager;
-  }
-
   seat = zms_seat_create(compositor);
   if (seat == NULL) {
     zms_log("failed to create a seat\n");
@@ -126,15 +119,11 @@ zms_compositor_create()
   }
 
   compositor->priv->wm_base = wm_base;
-  compositor->priv->data_device_manager = data_device_manager;
   compositor->seat = seat;
 
   return compositor;
 
 err_seat:
-  zms_data_device_manager_destroy(data_device_manager);
-
-err_data_device_manager:
   zms_wm_base_destroy(wm_base);
 
 err_global:
@@ -155,7 +144,6 @@ zms_compositor_destroy(struct zms_compositor* compositor)
 {
   zms_seat_destroy(compositor->seat);
   zms_wm_base_destroy(compositor->priv->wm_base);
-  zms_data_device_manager_destroy(compositor->priv->data_device_manager);
   wl_display_destroy(compositor->display);
   free(compositor->priv);
   free(compositor);
