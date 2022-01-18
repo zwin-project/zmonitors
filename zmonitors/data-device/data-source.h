@@ -6,6 +6,7 @@
 
 struct zms_data_source {
   struct wl_resource *resource;
+  struct zms_backend_data_source *proxy;
 };
 
 struct zms_data_source *zms_data_source_create(

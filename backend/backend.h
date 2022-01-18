@@ -20,6 +20,7 @@ struct zms_backend {
   struct zgn_shell* shell;
   struct wl_shm* shm;
   struct zgn_opengl* opengl;
+  struct zgn_data_device_manager* data_device_manager;
 
   struct zms_ray* ray; /* nullable */
 };

@@ -75,6 +75,33 @@ void zms_cuboid_window_move(
 void zms_cuboid_window_rotate(
     struct zms_cuboid_window* cuboid_window, versor quaternion);
 
+/* data device */
+
+void zms_data_device_start_drag();
+
+/* data source backend */
+
+struct zms_backend_data_source;
+
+struct zms_backend_data_source_interface {
+  void (*target)(void* data, const char* mime_type);
+  void (*send)(void* data, const char* mime_type, int32_t fd);
+  void (*cancelled)(void* data);
+  void (*dnd_drop_performed)(void* data);
+  void (*dnd_finished)(void* data);
+  void (*action)(void* data, uint32_t dnd_action);
+};
+
+struct zms_backend_data_source* zms_backend_data_source_create(
+    struct zms_backend* backend, void* user_data,
+    const struct zms_backend_data_source_interface* interface);
+
+void zms_backend_data_source_destroy(
+    struct zms_backend_data_source* data_source);
+
+void zms_backend_data_source_offer(
+    struct zms_backend_data_source* data_source, const char* mime_type);
+
 /* opengl shader */
 
 struct zms_opengl_shader_program;
