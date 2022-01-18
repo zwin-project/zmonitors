@@ -2,16 +2,10 @@
 
 #include <zmonitors-util.h>
 
-static void zms_data_device_destroy(struct zms_data_device* data_device);
-
 static void
 zms_data_device_handle_destroy(struct wl_resource* resource)
 {
-  struct zms_data_device* data_device;
-
-  data_device = wl_resource_get_user_data(resource);
-
-  zms_data_device_destroy(data_device);
+  wl_list_remove(wl_resource_get_link(resource));
 }
 
 static void
@@ -56,37 +50,51 @@ static const struct wl_data_device_interface data_device_interface = {
 };
 
 ZMS_EXPORT struct zms_data_device*
-zms_data_device_create(struct wl_client* client, uint32_t id)
+zms_data_device_create()
 {
   struct zms_data_device* data_device;
-  struct wl_resource* resource;
 
   data_device = zalloc(sizeof *data_device);
-  if (data_device == NULL) {
-    wl_client_post_no_memory(client);
-    goto err;
-  }
+  if (data_device == NULL) goto err;
 
-  resource = wl_resource_create(client, &wl_data_device_interface, 3, id);
-  if (resource == NULL) {
-    wl_client_post_no_memory(client);
-    goto err_resource;
-  }
-
-  wl_resource_set_implementation(resource, &data_device_interface, data_device,
-      zms_data_device_handle_destroy);
+  wl_list_init(&data_device->resource_list);
 
   return data_device;
-
-err_resource:
-  free(data_device);
 
 err:
   return NULL;
 }
 
-static void
+ZMS_EXPORT void
 zms_data_device_destroy(struct zms_data_device* data_device)
 {
+  struct wl_resource *resource, *tmp;
+
+  wl_resource_for_each_safe(resource, tmp, &data_device->resource_list)
+      wl_resource_destroy(resource);
+
   free(data_device);
+}
+
+ZMS_EXPORT struct wl_resource*
+zms_data_device_create_resource(
+    struct zms_data_device* data_device, struct wl_client* client, uint32_t id)
+{
+  struct wl_resource* resource;
+
+  resource = wl_resource_create(client, &wl_data_device_interface, 3, id);
+  if (resource == NULL) {
+    wl_client_post_no_memory(client);
+    goto err;
+  }
+
+  wl_resource_set_implementation(resource, &data_device_interface, data_device,
+      zms_data_device_handle_destroy);
+
+  wl_list_insert(&data_device->resource_list, wl_resource_get_link(resource));
+
+  return resource;
+
+err:
+  return NULL;
 }
