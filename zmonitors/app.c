@@ -2,6 +2,7 @@
 
 #include <signal.h>
 
+#include "data-device-manager.h"
 #include "monitor.h"
 
 static void
@@ -67,6 +68,7 @@ zms_app_create()
   struct zms_app* app;
   struct zms_compositor* compositor;
   struct zms_backend* backend;
+  struct zms_data_device_manager* data_device_manager;
   struct zms_monitor* primary_monitor;
   struct zms_screen_size screen_size = {1920, 1080};
   struct wl_event_loop* loop;
@@ -99,6 +101,10 @@ zms_app_create()
     zms_log("failed to connect zigen server\n");
     goto err_connect;
   }
+
+  data_device_manager = zms_data_device_manager_create(compositor, backend);
+  if (data_device_manager == NULL) goto err_data_device_manager;
+  app->data_device_manager = data_device_manager;
 
   primary_monitor = zms_monitor_create(backend, compositor, screen_size);
   if (primary_monitor == NULL) {
@@ -134,6 +140,9 @@ err_event_source:
   zms_monitor_destroy(primary_monitor);
 
 err_monitor:
+  zms_data_device_manager_destroy(data_device_manager);
+
+err_data_device_manager:
 err_connect:
   zms_backend_destroy(backend);
 
@@ -150,6 +159,7 @@ err:
 ZMS_EXPORT void
 zms_app_destroy(struct zms_app* app)
 {
+  zms_data_device_manager_destroy(app->data_device_manager);
   zms_monitor_destroy(app->primary_monitor);
   zms_backend_destroy(app->backend);
   zms_compositor_destroy(app->compositor);

@@ -4,11 +4,13 @@
 #include <zmonitors-backend.h>
 #include <zmonitors-server.h>
 
+#include "data-device-manager.h"
 #include "monitor.h"
 
 struct zms_app {
   struct zms_compositor* compositor;
   struct zms_backend* backend;
+  struct zms_data_device_manager* data_device_manager;
   struct wl_event_source* backend_event_source;
   struct zms_monitor* primary_monitor;
 };
