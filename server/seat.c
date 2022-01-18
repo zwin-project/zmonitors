@@ -108,6 +108,7 @@ zms_seat_create(struct zms_compositor* compositor)
   struct zms_seat* seat;
   struct zms_seat_private* priv;
   struct wl_global* global;
+  struct zms_data_device* data_device;
 
   seat = zalloc(sizeof seat);
   if (seat == NULL) {
@@ -121,6 +122,12 @@ zms_seat_create(struct zms_compositor* compositor)
     goto err_priv;
   }
 
+  data_device = zms_data_device_create();
+  if (data_device == NULL) {
+    zms_log("failed to create a data device\n");
+    goto err_data_device;
+  }
+
   global = wl_global_create(
       compositor->display, &wl_seat_interface, 7, seat, zms_seat_bind);
   if (global == NULL) {
@@ -130,6 +137,7 @@ zms_seat_create(struct zms_compositor* compositor)
 
   priv->global = global;
   priv->compositor = compositor;
+  priv->data_device = data_device;
   priv->name = "default";
   wl_list_init(&priv->resource_list);
 
@@ -138,6 +146,9 @@ zms_seat_create(struct zms_compositor* compositor)
   return seat;
 
 err_global:
+  zms_data_device_destroy(data_device);
+
+err_data_device:
   free(priv);
 
 err_priv:
@@ -159,6 +170,7 @@ zms_seat_destroy(struct zms_seat* seat)
     wl_list_remove(wl_resource_get_link(resource));
   }
 
+  zms_data_device_destroy(seat->priv->data_device);
   wl_global_destroy(seat->priv->global);
   free(seat->priv);
   free(seat);

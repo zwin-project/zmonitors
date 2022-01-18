@@ -4,6 +4,7 @@
 
 #include "data-device.h"
 #include "data-source.h"
+#include "seat.h"
 
 static void
 zms_data_device_manager_protocol_create_data_source(
@@ -15,12 +16,15 @@ zms_data_device_manager_protocol_create_data_source(
 
 static void
 zms_data_device_manager_protocol_get_data_device(struct wl_client* client,
-    struct wl_resource* resource, uint32_t id, struct wl_resource* seat)
+    struct wl_resource* resource, uint32_t id,
+    struct wl_resource* seat_resource)
 {
   // TODO:
   Z_UNUSED(resource);
-  Z_UNUSED(seat);
-  zms_data_device_create(client, id);
+  struct zms_seat* seat;
+
+  seat = wl_resource_get_user_data(seat_resource);
+  zms_data_device_create_resource(seat->priv->data_device, client, id);
 }
 
 static const struct wl_data_device_manager_interface
