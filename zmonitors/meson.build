@@ -13,6 +13,8 @@ deps_zmonitors = [
 
 srcs_zmonitors = [
   'app.c',
+  'data-offer-proxy.c',
+  'data-source-proxy.c',
   'intersect.c',
   'main.c',
   zigen_client_protocol_h,

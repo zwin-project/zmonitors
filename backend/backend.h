@@ -9,7 +9,7 @@
 #include "zmonitors-backend.h"
 
 struct zms_backend {
-  void* uer_data;
+  void* user_data;
   const struct zms_backend_interface* interface; /* nonnull */
 
   struct wl_display* display;
@@ -20,6 +20,9 @@ struct zms_backend {
   struct zgn_shell* shell;
   struct wl_shm* shm;
   struct zgn_opengl* opengl;
+  struct zgn_data_device_manager* data_device_manager;
+
+  struct zms_backend_data_device* data_device; /* nonnull once created */
 
   struct zms_ray* ray; /* nullable */
 };

@@ -3,6 +3,7 @@
 #include <zmonitors-server.h>
 
 #include "compositor.h"
+#include "drag-grab.h"
 #include "output.h"
 #include "pointer-client.h"
 
@@ -122,7 +123,7 @@ zms_seat_create(struct zms_compositor* compositor)
     goto err_priv;
   }
 
-  data_device = zms_data_device_create();
+  data_device = zms_data_device_create(seat);
   if (data_device == NULL) {
     zms_log("failed to create a data device\n");
     goto err_data_device;
@@ -137,11 +138,11 @@ zms_seat_create(struct zms_compositor* compositor)
 
   priv->global = global;
   priv->compositor = compositor;
-  priv->data_device = data_device;
   priv->name = "default";
   wl_list_init(&priv->resource_list);
 
   seat->priv = priv;
+  seat->data_device = data_device;
 
   return seat;
 
@@ -170,7 +171,7 @@ zms_seat_destroy(struct zms_seat* seat)
     wl_list_remove(wl_resource_get_link(resource));
   }
 
-  zms_data_device_destroy(seat->priv->data_device);
+  zms_data_device_destroy(seat->data_device);
   wl_global_destroy(seat->priv->global);
   free(seat->priv);
   free(seat);
@@ -194,12 +195,19 @@ zms_seat_release_pointer(struct zms_seat* seat)
   zms_seat_send_capabilities(seat, NULL);
 }
 
-ZMS_EXPORT
-void
+ZMS_EXPORT void
+zms_seat_notify_pointer_enter(
+    struct zms_seat* seat, struct zms_output* output, vec2 pos)
+{
+  struct zms_pointer* pointer = seat->priv->pointer;
+
+  if (pointer) zms_pointer_move_to(pointer, output, pos[0], pos[1]);
+}
+
+ZMS_EXPORT void
 zms_seat_notify_pointer_motion_abs(
     struct zms_seat* seat, struct zms_output* output, vec2 pos, uint32_t time)
 {
-  Z_UNUSED(seat);
   struct zms_pointer* pointer = seat->priv->pointer;
 
   if (pointer)
@@ -233,9 +241,9 @@ zms_seat_notify_pointer_button(struct zms_seat* seat, uint32_t time,
 ZMS_EXPORT void
 zms_seat_notify_pointer_leave(struct zms_seat* seat)
 {
-  Z_UNUSED(seat);
-
   struct zms_pointer* pointer = seat->priv->pointer;
+
+  seat->data_device->proxy_enter_serial = 0;
 
   if (pointer == NULL) return;
 
@@ -245,4 +253,12 @@ zms_seat_notify_pointer_leave(struct zms_seat* seat)
 
   pointer->grab_serial = 0;
   pointer->button_count = 0;
+}
+
+ZMS_EXPORT void
+zms_seat_notify_start_drag(struct zms_seat* seat, uint32_t enter_serial)
+{
+  zms_drag_grab_start(seat);
+  seat->data_device->proxy_enter_serial = enter_serial;
+  seat->data_device->is_dragging = true;
 }

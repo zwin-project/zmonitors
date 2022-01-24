@@ -10,8 +10,10 @@ static void
 zms_data_device_manager_protocol_create_data_source(
     struct wl_client* client, struct wl_resource* resource, uint32_t id)
 {
-  Z_UNUSED(resource);
-  zms_data_source_create(client, id);
+  struct zms_data_device_manager* data_device_manager;
+  data_device_manager = wl_resource_get_user_data(resource);
+
+  zms_data_source_create(client, id, data_device_manager->compositor);
 }
 
 static void
@@ -24,7 +26,7 @@ zms_data_device_manager_protocol_get_data_device(struct wl_client* client,
   struct zms_seat* seat;
 
   seat = wl_resource_get_user_data(seat_resource);
-  zms_data_device_create_resource(seat->priv->data_device, client, id);
+  zms_data_device_create_resource(seat->data_device, client, id);
 }
 
 static const struct wl_data_device_manager_interface
@@ -73,6 +75,7 @@ zms_data_device_manager_create(struct zms_compositor* compositor)
   }
 
   data_device_manager->global = global;
+  data_device_manager->compositor = compositor;
 
   return data_device_manager;
 

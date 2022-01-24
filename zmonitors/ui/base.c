@@ -177,6 +177,75 @@ zms_ui_base_propagate_ray_button(struct zms_ui_base* ui_base, uint32_t serial,
 }
 
 ZMS_EXPORT bool
+zms_ui_base_propagate_data_device_enter(struct zms_ui_base* ui_base,
+    uint32_t serial, vec3 origin, vec3 direction,
+    struct zms_data_offer_proxy* data_offer_proxy)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_data_device_enter(
+            child, serial, origin, direction, data_offer_proxy))
+      return false;
+  }
+
+  if (ui_base->interface->data_device_enter)
+    return ui_base->interface->data_device_enter(
+        ui_base, serial, origin, direction, data_offer_proxy);
+
+  return true;
+}
+
+ZMS_EXPORT bool
+zms_ui_base_propagate_data_device_leave(struct zms_ui_base* ui_base)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_data_device_leave(child)) return false;
+  }
+
+  if (ui_base->interface->data_device_leave)
+    return ui_base->interface->data_device_leave(ui_base);
+
+  return true;
+}
+
+ZMS_EXPORT bool
+zms_ui_base_propagate_data_device_motion_abs(
+    struct zms_ui_base* ui_base, uint32_t time, vec3 origin, vec3 direction)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_data_device_motion_abs(
+            child, time, origin, direction))
+      return false;
+  }
+
+  if (ui_base->interface->data_device_motion_abs)
+    return ui_base->interface->data_device_motion_abs(
+        ui_base, time, origin, direction);
+
+  return true;
+}
+
+ZMS_EXPORT bool
+zms_ui_base_propagate_data_device_drop(struct zms_ui_base* ui_base)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_data_device_drop(child)) return false;
+  }
+
+  if (ui_base->interface->data_device_drop)
+    return ui_base->interface->data_device_drop(ui_base);
+
+  return true;
+}
+
+ZMS_EXPORT bool
 zms_ui_base_propagate_cuboid_window_moved(
     struct zms_ui_base* ui_base, vec3 face_direction)
 {

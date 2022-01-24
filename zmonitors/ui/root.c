@@ -1,7 +1,7 @@
 #include "root.h"
 
 #include <cglm/cglm.h>
-#include <zmonitors-util.h>
+#include <zmonitors-backend.h>
 
 #include "base.h"
 #include "monitor.h"
@@ -45,6 +45,39 @@ zms_ui_root_ray_button(
 }
 
 static void
+zms_ui_root_data_device_enter(void* data, uint32_t serial, vec3 origin,
+    vec3 direction, void* data_offer_user_data)
+{
+  struct zms_ui_root* root = data;
+  struct zms_data_offer_proxy* data_offer_proxy = data_offer_user_data;
+  zms_ui_base_propagate_data_device_enter(
+      root->base, serial, origin, direction, data_offer_proxy);
+}
+
+static void
+zms_ui_root_data_device_leave(void* data)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_data_device_leave(root->base);
+}
+
+static void
+zms_ui_root_data_device_motion_abs(
+    void* data, uint32_t time, vec3 origin, vec3 direction)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_data_device_motion_abs(
+      root->base, time, origin, direction);
+}
+
+static void
+zms_ui_root_data_device_drop(void* data)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_data_device_drop(root->base);
+}
+
+static void
 zms_ui_root_cuboid_window_moved(void* data, vec3 face_direction)
 {
   struct zms_ui_root* root = data;
@@ -57,6 +90,10 @@ static const struct zms_cuboid_window_interface cuboid_window_interface = {
         .ray_leave = zms_ui_root_ray_leave,
         .ray_motion = zms_ui_root_ray_motion,
         .ray_button = zms_ui_root_ray_button,
+        .data_device_enter = zms_ui_root_data_device_enter,
+        .data_device_leave = zms_ui_root_data_device_leave,
+        .data_device_motion_abs = zms_ui_root_data_device_motion_abs,
+        .data_device_drop = zms_ui_root_data_device_drop,
     },
     .moved = zms_ui_root_cuboid_window_moved,
 };

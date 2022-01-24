@@ -2,6 +2,8 @@
 
 #include <signal.h>
 
+#include "data-offer-proxy.h"
+#include "data-source-proxy.h"
 #include "monitor.h"
 
 static void
@@ -20,9 +22,20 @@ zms_app_lose_ray_cap(void* data)
   zms_seat_release_pointer(app->compositor->seat);
 }
 
+static void
+zms_app_data_offer(void* data, struct zms_backend_data_offer* data_offer)
+{
+  struct zms_app* app = data;
+  struct zms_data_offer_proxy* data_offer_proxy =
+      zms_app_data_offer_proxy_create(data_offer);
+  zms_data_device_notify_new_data_offer(
+      app->compositor->seat->data_device, data_offer_proxy);
+}
+
 static const struct zms_backend_interface backend_interface = {
     .gain_ray_capability = zms_app_gain_ray_cap,
     .lose_ray_capability = zms_app_lose_ray_cap,
+    .data_offer = zms_app_data_offer,
 };
 
 static int
@@ -61,6 +74,18 @@ on_term_signal(int signal_number, void* data)
   return 0;
 }
 
+static struct zms_data_source_proxy*
+zms_app_compositor_create_data_source_proxy(void* data, void* proxy_user_data,
+    const struct zms_data_source_proxy_interface* interface)
+{
+  struct zms_app* app = data;
+  return zms_data_source_proxy_create(app, proxy_user_data, interface);
+}
+
+static const struct zms_compositor_interface compositor_interfce = {
+    .create_data_source_proxy = zms_app_compositor_create_data_source_proxy,
+};
+
 ZMS_EXPORT struct zms_app*
 zms_app_create()
 {
@@ -80,7 +105,7 @@ zms_app_create()
     goto err;
   }
 
-  compositor = zms_compositor_create();
+  compositor = zms_compositor_create(app, &compositor_interfce);
   if (compositor == NULL) {
     zms_log("failed to create a zms_compositor\n");
     goto err_compositor;

@@ -6,6 +6,7 @@
 
 struct zms_data_device_manager {
   struct wl_global* global;
+  struct zms_compositor* compositor;
 };
 
 struct zms_data_device_manager* zms_data_device_manager_create(

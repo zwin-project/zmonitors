@@ -16,6 +16,8 @@ struct zms_screen {
 
   bool texture_changed;
   bool ray_focus;
+  bool data_device_focus;
+  uint32_t data_device_enter_serial;
 
   // for ray intersection
   vec3 v0, vx, vy;

@@ -8,6 +8,9 @@
 #include "xdg-wm-base.h"
 
 struct zms_compositor_private {
+  void* user_data;
+  const struct zms_compositor_interface* interface;
+
   /* global objects */
   struct zms_wm_base* wm_base;
   struct zms_data_device_manager* data_device_manager;

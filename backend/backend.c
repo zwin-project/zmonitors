@@ -7,6 +7,7 @@
 #include <zigen-shell-client-protocol.h>
 #include <zmonitors-util.h>
 
+#include "data-device.h"
 #include "ray.h"
 #include "zmonitors-backend.h"
 
@@ -18,13 +19,13 @@ seat_capabilities(void* data, struct zgn_seat* seat, uint32_t capability)
 
   if (capability & ZGN_SEAT_CAPABILITY_RAY && backend->ray == NULL) {
     backend->ray = zms_ray_create(backend);
-    backend->interface->gain_ray_capability(backend->uer_data);
+    backend->interface->gain_ray_capability(backend->user_data);
   }
 
   if (!(capability & ZGN_SEAT_CAPABILITY_RAY) && backend->ray) {
     zms_ray_destroy(backend->ray);
     backend->ray = NULL;
-    backend->interface->lose_ray_capability(backend->uer_data);
+    backend->interface->lose_ray_capability(backend->user_data);
   }
 }
 
@@ -67,6 +68,9 @@ global_registry_handler(void* data, struct wl_registry* registry, uint32_t id,
   } else if (strcmp(interface, "zgn_opengl") == 0) {
     backend->opengl =
         wl_registry_bind(registry, id, &zgn_opengl_interface, version);
+  } else if (strcmp(interface, "zgn_data_device_manager") == 0) {
+    backend->data_device_manager = wl_registry_bind(
+        registry, id, &zgn_data_device_manager_interface, version);
   }
 }
 
@@ -98,7 +102,7 @@ zms_backend_create(
   }
 
   backend->display = NULL;
-  backend->uer_data = user_data;
+  backend->user_data = user_data;
   backend->interface = interface;
 
   return backend;
@@ -133,11 +137,16 @@ zms_backend_connect(struct zms_backend* backend, const char* socket)
   wl_display_roundtrip(display);
 
   if (backend->compositor == NULL || backend->seat == NULL ||
-      backend->shell == NULL || backend->shm == NULL || backend->opengl == NULL)
+      backend->shell == NULL || backend->shm == NULL ||
+      backend->opengl == NULL || backend->data_device_manager == NULL)
     goto err_globals;
+
+  backend->data_device = zms_backend_data_device_create(backend);
+  if (backend->data_device == NULL) goto err_data_device;
 
   return true;
 
+err_data_device:
 err_globals:
   wl_registry_destroy(registry);
 

@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <zmonitors-util.h>
 
+struct zms_backend_data_offer;
+
 /* backend */
 
 struct zms_backend;
@@ -12,6 +14,7 @@ struct zms_backend;
 struct zms_backend_interface {
   void (*gain_ray_capability)(void* data);
   void (*lose_ray_capability)(void* data);
+  void (*data_offer)(void* data, struct zms_backend_data_offer* data_offer);
 };
 
 struct zms_backend* zms_backend_create(
@@ -39,6 +42,12 @@ struct zms_virtual_object_interface {
   void (*ray_motion)(void* data, uint32_t time, vec3 origin, vec3 direction);
   void (*ray_button)(void* data, uint32_t serial, uint32_t time,
       uint32_t button, uint32_t state);
+  void (*data_device_enter)(void* data, uint32_t serial, vec3 origin,
+      vec3 direction, void* data_offer_user_data);
+  void (*data_device_leave)(void* data);
+  void (*data_device_motion_abs)(
+      void* data, uint32_t time, vec3 origin, vec3 direction);
+  void (*data_device_drop)(void* data);
 };
 
 /* cuboid window */
@@ -74,6 +83,65 @@ void zms_cuboid_window_move(
 
 void zms_cuboid_window_rotate(
     struct zms_cuboid_window* cuboid_window, versor quaternion);
+
+/* data offer backend */
+
+struct zms_backend_data_offer_interface {
+  void (*offer)(void* user_data, const char* mime_type);
+  void (*source_action)(void* user_data, uint32_t source_action);
+  void (*action)(void* user_data, uint32_t dnd_action);
+};
+
+void zms_backend_data_offer_set_implementation(
+    struct zms_backend_data_offer* data_offer, void* user_data,
+    const struct zms_backend_data_offer_interface* interface);
+
+void zms_backend_data_offer_destroy(struct zms_backend_data_offer* data_offer);
+
+void zms_backend_data_offer_accept(struct zms_backend_data_offer* data_offer,
+    uint32_t serial, const char* mime_type);
+
+void zms_backend_data_offer_receive(struct zms_backend_data_offer* data_offer,
+    const char* mime_type, int32_t fd);
+
+void zms_backend_data_offer_finish(struct zms_backend_data_offer* data_offer);
+
+void zms_backend_data_offer_set_actions(
+    struct zms_backend_data_offer* data_offer, uint32_t dnd_actions,
+    uint32_t preffered_action);
+
+/* data source backend */
+
+struct zms_backend_data_source;
+
+struct zms_backend_data_source_interface {
+  void (*target)(void* data, const char* mime_type);
+  void (*send)(void* data, const char* mime_type, int32_t fd);
+  void (*cancelled)(void* data);
+  void (*dnd_drop_performed)(void* data);
+  void (*dnd_finished)(void* data);
+  void (*action)(void* data, uint32_t dnd_action);
+};
+
+struct zms_backend_data_source* zms_backend_data_source_create(
+    struct zms_backend* backend, void* user_data,
+    const struct zms_backend_data_source_interface* interface);
+
+void zms_backend_data_source_destroy(
+    struct zms_backend_data_source* data_source);
+
+void zms_backend_data_source_offer(
+    struct zms_backend_data_source* data_source, const char* mime_type);
+
+void zms_backend_data_source_set_action(
+    struct zms_backend_data_source* data_source, uint32_t dnd_actions);
+
+/* data device */
+
+void zms_backend_data_device_start_drag(struct zms_backend* backend,
+    struct zms_backend_data_source* data_source,
+    struct zms_virtual_object* virtual_object,
+    struct zms_virtual_object* icon /* nullable */, uint32_t serial);
 
 /* opengl shader */
 
