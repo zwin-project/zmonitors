@@ -54,7 +54,8 @@ zms_compositor_bind(
 }
 
 ZMS_EXPORT struct zms_compositor*
-zms_compositor_create()
+zms_compositor_create(
+    void* user_data, const struct zms_compositor_interface* interface)
 {
   struct zms_compositor* compositor;
   struct zms_compositor_private* priv;
@@ -96,6 +97,8 @@ zms_compositor_create()
     goto err_global;
   }
 
+  priv->user_data = user_data;
+  priv->interface = interface;
   wl_list_init(&priv->output_list);
   compositor->priv = priv;
   compositor->display = display;

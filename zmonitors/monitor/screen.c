@@ -4,6 +4,7 @@
 #include <zigen-opengl-client-protocol.h>
 #include <zmonitors-util.h>
 
+#include "data-source-proxy.h"
 #include "intersect.h"
 #include "monitor-internal.h"
 #include "screen-frag.h"
@@ -42,9 +43,10 @@ zms_screen_calculate_corner_points(struct zms_screen* screen)
 }
 
 static bool
-ray_motion(
-    struct zms_ui_base* ui_base, uint32_t time, vec3 origin, vec3 direction)
+ray_enter(
+    struct zms_ui_base* ui_base, uint32_t serial, vec3 origin, vec3 direction)
 {
+  Z_UNUSED(serial);
   struct zms_screen* screen = ui_base->user_data;
   vec2 pos;
   float d;
@@ -54,8 +56,33 @@ ray_motion(
     screen->ray_focus = true;
     pos[0] *= screen->monitor->screen_size.width;
     pos[1] *= screen->monitor->screen_size.height;
-    zms_seat_notify_pointer_motion_abs(
-        screen->monitor->compositor->seat, screen->output, pos, time);
+    zms_seat_notify_pointer_enter(
+        screen->monitor->compositor->seat, screen->output, pos);
+  }
+
+  return true;
+}
+
+static bool
+ray_motion(
+    struct zms_ui_base* ui_base, uint32_t time, vec3 origin, vec3 direction)
+{
+  struct zms_screen* screen = ui_base->user_data;
+  vec2 pos;
+  float d;
+
+  if (zms_interesect_ray_rect(
+          origin, direction, screen->v0, screen->vx, screen->vy, pos, &d)) {
+    pos[0] *= screen->monitor->screen_size.width;
+    pos[1] *= screen->monitor->screen_size.height;
+    if (screen->ray_focus) {
+      zms_seat_notify_pointer_motion_abs(
+          screen->monitor->compositor->seat, screen->output, pos, time);
+    } else {
+      zms_seat_notify_pointer_enter(
+          screen->monitor->compositor->seat, screen->output, pos);
+      screen->ray_focus = true;
+    }
   } else {
     if (screen->ray_focus)
       zms_seat_notify_pointer_leave(screen->monitor->compositor->seat);
@@ -71,10 +98,10 @@ ray_leave(struct zms_ui_base* ui_base, uint32_t serial)
   Z_UNUSED(serial);
   struct zms_screen* screen = ui_base->user_data;
 
-  screen->ray_focus = false;
-
   if (screen->ray_focus)
     zms_seat_notify_pointer_leave(screen->monitor->compositor->seat);
+
+  screen->ray_focus = false;
 
   return true;
 }
@@ -89,6 +116,88 @@ ray_button(struct zms_ui_base* ui_base, uint32_t serial, uint32_t time,
     zms_seat_notify_pointer_button(
         screen->monitor->compositor->seat, time, button, state, serial);
   }
+
+  return true;
+}
+
+static bool
+data_device_enter(struct zms_ui_base* ui_base, uint32_t serial, vec3 origin,
+    vec3 direction, struct zms_data_offer_proxy* data_offer_proxy)
+{
+  Z_UNUSED(data_offer_proxy);
+  struct zms_screen* screen = ui_base->user_data;
+  vec2 pos;
+  float d;
+
+  screen->data_device_enter_serial = serial;
+
+  if (zms_interesect_ray_rect(
+          origin, direction, screen->v0, screen->vx, screen->vy, pos, &d)) {
+    pos[0] *= screen->monitor->screen_size.width;
+    pos[1] *= screen->monitor->screen_size.height;
+    zms_seat_notify_start_drag(screen->monitor->compositor->seat, serial);
+    zms_seat_notify_pointer_enter(
+        screen->monitor->compositor->seat, screen->output, pos);
+    screen->data_device_focus = true;
+  }
+  return true;
+}
+
+static bool
+data_device_leave(struct zms_ui_base* ui_base)
+{
+  struct zms_screen* screen = ui_base->user_data;
+
+  zms_data_device_notify_leave(screen->monitor->compositor->seat->data_device);
+
+  if (screen->data_device_focus)
+    zms_seat_notify_pointer_leave(screen->monitor->compositor->seat);
+  else
+    zms_data_device_destroy_data_offer(
+        screen->monitor->compositor->seat->data_device);
+
+  screen->data_device_focus = false;
+
+  return true;
+}
+
+static bool
+data_device_motion_abs(
+    struct zms_ui_base* ui_base, uint32_t time, vec3 origin, vec3 direction)
+{
+  struct zms_screen* screen = ui_base->user_data;
+  vec2 pos;
+  float d;
+
+  if (zms_interesect_ray_rect(
+          origin, direction, screen->v0, screen->vx, screen->vy, pos, &d)) {
+    pos[0] *= screen->monitor->screen_size.width;
+    pos[1] *= screen->monitor->screen_size.height;
+    if (screen->data_device_focus) {
+      zms_seat_notify_pointer_motion_abs(
+          screen->monitor->compositor->seat, screen->output, pos, time);
+    } else {
+      zms_seat_notify_start_drag(
+          screen->monitor->compositor->seat, screen->data_device_enter_serial);
+      zms_seat_notify_pointer_enter(
+          screen->monitor->compositor->seat, screen->output, pos);
+      screen->data_device_focus = true;
+    }
+  } else {
+    if (screen->data_device_focus)
+      zms_seat_notify_pointer_leave(screen->monitor->compositor->seat);
+    screen->data_device_focus = false;
+  }
+
+  return true;
+}
+
+static bool
+data_device_drop(struct zms_ui_base* ui_base)
+{
+  struct zms_screen* screen = ui_base->user_data;
+
+  zms_data_device_notify_drop(screen->monitor->compositor->seat->data_device);
 
   return true;
 }
@@ -224,9 +333,14 @@ static const struct zms_ui_base_interface ui_base_interface = {
     .reconfigure = ui_reconfigure,
     .repaint = ui_repaint,
     .frame = ui_frame,
+    .ray_enter = ray_enter,
     .ray_leave = ray_leave,
     .ray_motion = ray_motion,
     .ray_button = ray_button,
+    .data_device_enter = data_device_enter,
+    .data_device_leave = data_device_leave,
+    .data_device_motion_abs = data_device_motion_abs,
+    .data_device_drop = data_device_drop,
 };
 
 static void
@@ -238,8 +352,24 @@ schedule_output_repainting(void* data, struct zms_output* output)
   zms_ui_base_schedule_repaint(screen->base);
 }
 
+static void
+start_drag(
+    void* data, struct zms_data_source_proxy* proxy_base, uint32_t serial)
+{
+  struct zms_screen* screen = data;
+  struct zms_app_data_source_proxy* proxy;
+  struct zms_virtual_object* virtual_object;
+
+  proxy = wl_container_of(proxy_base, proxy, base);
+  virtual_object = screen->base->root->cuboid_window->virtual_object;
+
+  zms_backend_data_device_start_drag(screen->monitor->backend,
+      proxy->backend_data_source, virtual_object, NULL, serial);
+}
+
 static const struct zms_output_interface output_interface = {
     .schedule_repaint = schedule_output_repainting,
+    .start_drag = start_drag,
 };
 
 ZMS_EXPORT struct zms_screen*
@@ -275,6 +405,8 @@ zms_screen_create(struct zms_monitor* monitor)
 
   screen->texture_changed = false;
   screen->ray_focus = false;
+  screen->data_device_focus = false;
+  screen->data_device_enter_serial = 0;
 
   return screen;
 
