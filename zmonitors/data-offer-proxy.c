@@ -20,29 +20,26 @@ zms_app_data_offer_proxy_event_offer(void* user_data, const char* mime_type)
 }
 
 static void
-zms_app_data_offer_proxy_event_source_action(
-    void* user_data, uint32_t source_action)
+zms_app_data_offer_proxy_event_source_actions(
+    void* user_data, uint32_t source_actions)
 {
-  // TODO:
-  zms_log("event not implemented yet: zgn_data_offer.source_action\n");
   struct zms_data_offer_proxy* proxy_base = user_data;
-  Z_UNUSED(proxy_base);
-  Z_UNUSED(source_action);
+  proxy_base->source_actions = source_actions;
+  proxy_base->set_source_action = true;
+  zms_signal_emit(&proxy_base->source_actions_change_signal, NULL);
 }
 
 static void
 zms_app_data_offer_proxy_event_action(void* user_data, uint32_t dnd_action)
 {
-  // TODO:
-  zms_log("event not implemented yet: zgn_data_offer.action\n");
   struct zms_data_offer_proxy* proxy_base = user_data;
-  Z_UNUSED(proxy_base);
-  Z_UNUSED(dnd_action);
+  proxy_base->action = dnd_action;
+  zms_signal_emit(&proxy_base->action_change_signal, NULL);
 }
 
 static const struct zms_backend_data_offer_interface data_offer_interface = {
     .offer = zms_app_data_offer_proxy_event_offer,
-    .source_action = zms_app_data_offer_proxy_event_source_action,
+    .source_actions = zms_app_data_offer_proxy_event_source_actions,
     .action = zms_app_data_offer_proxy_event_action,
 };
 
@@ -116,12 +113,17 @@ zms_app_data_offer_proxy_create(
       backend_data_offer, &proxy->base, &data_offer_interface);
 
   wl_array_init(&proxy->base.mime_types);
+  proxy->base.action = WL_DATA_DEVICE_MANAGER_DND_ACTION_NONE;
+  proxy->base.source_actions = WL_DATA_DEVICE_MANAGER_DND_ACTION_NONE;
+  proxy->base.set_source_action = false;
   proxy->base.destroy = zms_app_data_offer_proxy_request_destroy;
   proxy->base.accept = zms_app_data_offer_proxy_request_accept;
   proxy->base.receive = zms_app_data_offer_proxy_request_receive;
   proxy->base.finish = zms_app_data_offer_proxy_request_finish;
   proxy->base.set_actions = zms_app_data_offer_proxy_request_set_actions;
   zms_signal_init(&proxy->base.destroy_signal);
+  zms_signal_init(&proxy->base.action_change_signal);
+  zms_signal_init(&proxy->base.source_actions_change_signal);
   proxy->backend_data_offer = backend_data_offer;
 
   return &proxy->base;

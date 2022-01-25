@@ -45,7 +45,7 @@ zms_data_source_protocol_set_actions(struct wl_client *client,
 
   data_source = wl_resource_get_user_data(resource);
 
-  data_source->proxy->set_action(data_source->proxy, dnd_actions);
+  data_source->proxy->set_actions(data_source->proxy, dnd_actions);
 }
 
 static const struct wl_data_source_interface data_source_interface = {

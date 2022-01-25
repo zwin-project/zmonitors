@@ -10,7 +10,11 @@ struct zms_data_device {
   struct zms_seat* seat;
   struct wl_list resource_list;
 
-  struct zms_weak_ref data_offer_proxy_ref;
+  struct zms_data_offer_proxy* data_offer_proxy;
+  struct zms_listener data_offer_proxy_destroy_listener;
+  struct zms_listener data_offer_proxy_action_change_listener;
+  struct zms_listener data_offer_proxy_source_actions_change_listener;
+
   struct zms_weak_ref data_offer_in_use_ref;
 
   struct zms_weak_ref focus_view_ref;

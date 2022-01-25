@@ -88,7 +88,7 @@ void zms_cuboid_window_rotate(
 
 struct zms_backend_data_offer_interface {
   void (*offer)(void* user_data, const char* mime_type);
-  void (*source_action)(void* user_data, uint32_t source_action);
+  void (*source_actions)(void* user_data, uint32_t source_actions);
   void (*action)(void* user_data, uint32_t dnd_action);
 };
 
@@ -133,7 +133,7 @@ void zms_backend_data_source_destroy(
 void zms_backend_data_source_offer(
     struct zms_backend_data_source* data_source, const char* mime_type);
 
-void zms_backend_data_source_set_action(
+void zms_backend_data_source_set_actions(
     struct zms_backend_data_source* data_source, uint32_t dnd_actions);
 
 /* data device */

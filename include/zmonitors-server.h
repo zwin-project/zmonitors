@@ -39,7 +39,8 @@ struct zms_data_source_proxy_interface {
 
 struct zms_data_source_proxy {
   void (*offer)(struct zms_data_source_proxy *proxy, const char *mime_type);
-  void (*set_action)(struct zms_data_source_proxy *proxy, uint32_t dnd_actions);
+  void (*set_actions)(
+      struct zms_data_source_proxy *proxy, uint32_t dnd_actions);
   void (*destroy)(struct zms_data_source_proxy *proxy);
 };
 
@@ -47,6 +48,9 @@ struct zms_data_source_proxy {
 
 struct zms_data_offer_proxy {
   struct wl_array mime_types;
+  uint32_t action;
+  uint32_t source_actions;
+  bool set_source_action;
   void (*accept)(struct zms_data_offer_proxy *offer_proxy, uint32_t serial,
       const char *mime_type);
   void (*receive)(struct zms_data_offer_proxy *offer_proxy,
@@ -58,6 +62,8 @@ struct zms_data_offer_proxy {
 
   // signals
   struct zms_signal destroy_signal;
+  struct zms_signal action_change_signal;
+  struct zms_signal source_actions_change_signal;
 };
 
 /* output */

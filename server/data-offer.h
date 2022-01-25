@@ -18,4 +18,10 @@ struct zms_data_offer* zms_data_offer_create(struct wl_client* client,
 
 void zms_data_offer_offer(struct zms_data_offer* data_offer);
 
+void zms_data_offer_send_source_actions(
+    struct zms_data_offer* data_offer, uint32_t source_actions);
+
+void zms_data_offer_send_action(
+    struct zms_data_offer* data_offer, uint32_t action);
+
 #endif  //  ZMONITORS_SERVER_DATA_OFFER_H
