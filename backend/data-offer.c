@@ -18,7 +18,7 @@ zms_backend_data_offer_protocol_source_action(
 {
   Z_UNUSED(zgn_data_offer);
   struct zms_backend_data_offer* offer = data;
-  offer->interface->source_action(offer->user_data, source_actions);
+  offer->interface->source_actions(offer->user_data, source_actions);
 }
 
 static void

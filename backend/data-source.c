@@ -1,5 +1,6 @@
 #include "data-source.h"
 
+#include <unistd.h>
 #include <zigen-client-protocol.h>
 #include <zmonitors-backend.h>
 
@@ -21,6 +22,7 @@ zms_backend_data_source_protocol_send(void* data,
   Z_UNUSED(zgn_data_source);
   struct zms_backend_data_source* data_source = data;
   data_source->interface->send(data_source->user_data, mime_type, fd);
+  close(fd);
 }
 
 static void
@@ -111,7 +113,7 @@ zms_backend_data_source_offer(
 }
 
 ZMS_EXPORT void
-zms_backend_data_source_set_action(
+zms_backend_data_source_set_actions(
     struct zms_backend_data_source* data_source, uint32_t dnd_actions)
 {
   zgn_data_source_set_actions(data_source->proxy, dnd_actions);

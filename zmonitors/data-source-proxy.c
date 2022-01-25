@@ -68,14 +68,14 @@ proxy_request_offer(
 }
 
 static void
-proxy_request_set_action(
+proxy_request_set_actions(
     struct zms_data_source_proxy *proxy_base, uint32_t dnd_actions)
 {
   struct zms_app_data_source_proxy *proxy;
 
   proxy = wl_container_of(proxy_base, proxy, base);
 
-  zms_backend_data_source_set_action(proxy->backend_data_source, dnd_actions);
+  zms_backend_data_source_set_actions(proxy->backend_data_source, dnd_actions);
 }
 
 // destructor
@@ -106,7 +106,7 @@ zms_data_source_proxy_create(struct zms_app *app, void *proxy_user_data,
   if (backend_data_source == NULL) goto err_backend_data_source;
 
   proxy->base.offer = proxy_request_offer;
-  proxy->base.set_action = proxy_request_set_action;
+  proxy->base.set_actions = proxy_request_set_actions;
   proxy->base.destroy = proxy_request_destroy;
   proxy->user_data = proxy_user_data;
   proxy->interface = interface;

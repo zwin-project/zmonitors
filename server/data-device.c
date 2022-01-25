@@ -81,8 +81,7 @@ zms_data_device_set_focus(struct zms_data_device* data_device,
 {
   struct zms_view* current_focus_view = data_device->focus_view_ref.data;
   struct wl_display* display = data_device->seat->priv->compositor->display;
-  struct zms_data_offer_proxy* data_offer_proxy =
-      data_device->data_offer_proxy_ref.data;
+  struct zms_data_offer_proxy* data_offer_proxy = data_device->data_offer_proxy;
   enum zms_data_device_set_focus_result res = 0;
 
   data_device->vx = vx;
@@ -121,6 +120,10 @@ zms_data_device_set_focus(struct zms_data_device* data_device,
       wl_data_device_send_data_offer(resource, data_offer->resource);
       zms_data_offer_offer(data_offer);
 
+      if (data_offer_proxy->set_source_action)
+        zms_data_offer_send_source_actions(
+            data_offer, data_offer_proxy->source_actions);
+
       wl_data_device_send_enter(resource, serial, view->priv->surface->resource,
           wl_fixed_from_double(vx), wl_fixed_from_double(vy),
           data_offer->resource);
@@ -136,6 +139,71 @@ zms_data_device_set_focus(struct zms_data_device* data_device,
   return res;
 }
 
+static void
+data_offer_proxy_destroy_handler(struct zms_listener* listener, void* data)
+{
+  Z_UNUSED(data);
+  struct zms_data_device* data_device;
+
+  data_device =
+      wl_container_of(listener, data_device, data_offer_proxy_destroy_listener);
+
+  wl_list_remove(&data_device->data_offer_proxy_destroy_listener.link);
+  wl_list_remove(&data_device->data_offer_proxy_action_change_listener.link);
+  wl_list_remove(
+      &data_device->data_offer_proxy_source_actions_change_listener.link);
+
+  data_device->data_offer_proxy = NULL;
+}
+
+static void
+data_offer_proxy_action_change_handler(
+    struct zms_listener* listener, void* data)
+{
+  Z_UNUSED(data);
+  struct zms_data_device* data_device;
+  struct zms_data_offer* data_offer;
+  struct zms_data_offer_proxy* data_offer_proxy;
+  uint32_t action;
+
+  data_device = wl_container_of(
+      listener, data_device, data_offer_proxy_action_change_listener);
+
+  data_offer_proxy = data_device->data_offer_proxy;
+  if (data_offer_proxy == NULL) return;
+
+  action = data_offer_proxy->action;
+
+  data_offer = data_device->data_offer_in_use_ref.data;
+  if (data_offer == NULL) return;
+
+  zms_data_offer_send_action(data_offer, action);
+}
+
+static void
+data_offer_proxy_source_actions_change_handler(
+    struct zms_listener* listener, void* data)
+{
+  Z_UNUSED(data);
+  struct zms_data_device* data_device;
+  struct zms_data_offer* data_offer;
+  struct zms_data_offer_proxy* data_offer_proxy;
+  uint32_t source_actions;
+
+  data_device = wl_container_of(
+      listener, data_device, data_offer_proxy_source_actions_change_listener);
+
+  data_offer_proxy = data_device->data_offer_proxy;
+  if (data_offer_proxy == NULL) return;
+
+  source_actions = data_offer_proxy->source_actions;
+
+  data_offer = data_device->data_offer_in_use_ref.data;
+  if (data_offer == NULL) return;
+
+  zms_data_offer_send_source_actions(data_offer, source_actions);
+}
+
 ZMS_EXPORT struct zms_data_device*
 zms_data_device_create(
     struct zms_seat* seat /* not fully initialized at this point */)
@@ -147,7 +215,15 @@ zms_data_device_create(
 
   data_device->seat = seat;
   wl_list_init(&data_device->resource_list);
-  zms_weak_ref_init(&data_device->data_offer_proxy_ref);
+
+  data_device->data_offer_proxy = NULL;
+  data_device->data_offer_proxy_destroy_listener.notify =
+      data_offer_proxy_destroy_handler;
+  data_device->data_offer_proxy_action_change_listener.notify =
+      data_offer_proxy_action_change_handler;
+  data_device->data_offer_proxy_source_actions_change_listener.notify =
+      data_offer_proxy_source_actions_change_handler;
+
   zms_weak_ref_init(&data_device->data_offer_in_use_ref);
   zms_weak_ref_init(&data_device->focus_view_ref);
   data_device->focus_serial = 0;
@@ -164,13 +240,11 @@ ZMS_EXPORT void
 zms_data_device_destroy(struct zms_data_device* data_device)
 {
   struct wl_resource *resource, *tmp;
-  struct zms_data_offer_proxy* data_offer_proxy;
 
   wl_resource_for_each_safe(resource, tmp, &data_device->resource_list)
       wl_resource_destroy(resource);
 
-  data_offer_proxy = data_device->data_offer_proxy_ref.data;
-  if (data_offer_proxy) data_offer_proxy->destroy(data_offer_proxy);
+  zms_data_device_destroy_data_offer(data_device);
 
   zms_weak_reference(&data_device->data_offer_in_use_ref, NULL, NULL);
   zms_weak_reference(&data_device->focus_view_ref, NULL, NULL);
@@ -223,20 +297,22 @@ zms_data_device_send_motion(struct zms_data_device* data_device, uint32_t time)
 /**
  * zms_data_offer_proxy objects are managed by zms_data_device, but they can be
  * destroyed outside of the zms_data_device. Up to 1 zms_data_offer_proxy object
- * can be alive is the system, and zms_data_device.data_offer_proxy_ref is the
- * reference to the zms_data_offer_proxy object.
+ * can be alive is the system, and zms_data_device.data_offer_proxy represents
+ * it.
  */
 ZMS_EXPORT void
 zms_data_device_notify_new_data_offer(struct zms_data_device* data_device,
     struct zms_data_offer_proxy* data_offer_proxy)
 {
-  struct zms_data_offer_proxy* prev_data_offer_proxy;
+  zms_data_device_destroy_data_offer(data_device);
 
-  prev_data_offer_proxy = data_device->data_offer_proxy_ref.data;
-  if (prev_data_offer_proxy)
-    prev_data_offer_proxy->destroy(prev_data_offer_proxy);
-  zms_weak_reference(&data_device->data_offer_proxy_ref, data_offer_proxy,
-      &data_offer_proxy->destroy_signal);
+  data_device->data_offer_proxy = data_offer_proxy;
+  zms_signal_add(&data_offer_proxy->destroy_signal,
+      &data_device->data_offer_proxy_destroy_listener);
+  zms_signal_add(&data_offer_proxy->action_change_signal,
+      &data_device->data_offer_proxy_action_change_listener);
+  zms_signal_add(&data_offer_proxy->source_actions_change_signal,
+      &data_device->data_offer_proxy_source_actions_change_listener);
 }
 
 ZMS_EXPORT void
@@ -267,9 +343,7 @@ zms_data_device_notify_leave(struct zms_data_device* data_device)
 ZMS_EXPORT void
 zms_data_device_destroy_data_offer(struct zms_data_device* data_device)
 {
-  struct zms_data_offer_proxy* data_offer_proxy;
+  if (data_device->data_offer_proxy == NULL) return;
 
-  data_offer_proxy = data_device->data_offer_proxy_ref.data;
-
-  if (data_offer_proxy) data_offer_proxy->destroy(data_offer_proxy);
+  data_device->data_offer_proxy->destroy(data_device->data_offer_proxy);
 }

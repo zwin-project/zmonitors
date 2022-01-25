@@ -50,8 +50,7 @@ zms_drag_grab_cancel(struct zms_pointer_grab *grab)
 {
   struct zms_drag_grab *drag_grab = wl_container_of(grab, drag_grab, base);
   struct zms_data_device *data_device = grab->pointer->seat->data_device;
-  struct zms_data_offer_proxy *data_offer_proxy =
-      data_device->data_offer_proxy_ref.data;
+  struct zms_data_offer_proxy *data_offer_proxy = data_device->data_offer_proxy;
 
   if ((zms_data_device_set_focus(data_device, NULL, 0, 0) &
           ZMS_DATA_DEVICE_SET_FOCUS_LEFT) == 0 &&

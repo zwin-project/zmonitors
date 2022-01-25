@@ -1,5 +1,6 @@
 #include "data-offer.h"
 
+#include <unistd.h>
 #include <zmonitors-util.h>
 
 #include "data-device.h"
@@ -25,8 +26,7 @@ zms_data_offer_is_in_use(struct zms_data_offer* data_offer)
   data_device = data_offer->data_device;
   data_offer_proxy = data_offer->data_offer_proxy_ref.data;
 
-  if (data_offer_proxy &&
-      data_offer_proxy == data_device->data_offer_proxy_ref.data &&
+  if (data_offer_proxy && data_offer_proxy == data_device->data_offer_proxy &&
       data_device->data_offer_in_use_ref.data == data_offer)
     return true;
 
@@ -65,6 +65,8 @@ zms_data_offer_protocol_receive(struct wl_client* client,
 
   if (zms_data_offer_is_in_use(data_offer))
     data_offer_proxy->receive(data_offer_proxy, mime_type, fd);
+
+  close(fd);
 }
 
 static void
@@ -106,12 +108,16 @@ zms_data_offer_protocol_set_actions(struct wl_client* client,
     struct wl_resource* resource, uint32_t dnd_actions,
     uint32_t preferred_action)
 {
-  // TODO:
-  zms_log("request not implemented yet: wl_data_offer.set_action\n");
   Z_UNUSED(client);
-  Z_UNUSED(resource);
-  Z_UNUSED(dnd_actions);
-  Z_UNUSED(preferred_action);
+  struct zms_data_offer* data_offer;
+  struct zms_data_offer_proxy* data_offer_proxy;
+
+  data_offer = wl_resource_get_user_data(resource);
+  data_offer_proxy = data_offer->data_offer_proxy_ref.data;
+
+  if (zms_data_offer_is_in_use(data_offer))
+    data_offer_proxy->set_actions(
+        data_offer_proxy, dnd_actions, preferred_action);
 }
 
 static const struct wl_data_offer_interface data_offer_interface = {
@@ -175,4 +181,17 @@ zms_data_offer_offer(struct zms_data_offer* data_offer)
 
   wl_array_for_each(type, &data_offer_proxy->mime_types)
       wl_data_offer_send_offer(data_offer->resource, *type);
+}
+
+ZMS_EXPORT void
+zms_data_offer_send_source_actions(
+    struct zms_data_offer* data_offer, uint32_t source_actions)
+{
+  wl_data_offer_send_source_actions(data_offer->resource, source_actions);
+}
+
+ZMS_EXPORT void
+zms_data_offer_send_action(struct zms_data_offer* data_offer, uint32_t action)
+{
+  wl_data_offer_send_action(data_offer->resource, action);
 }
