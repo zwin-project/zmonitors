@@ -9,6 +9,7 @@ srcs_zmonitors_backend = [
   'buffer.c',
   'cuboid-window.c',
   'frame-callback.c',
+  'keyboard.c',
   'opengl-component.c',
   'opengl-shader-program.c',
   'opengl-texture.c',

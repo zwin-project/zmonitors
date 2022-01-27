@@ -93,6 +93,55 @@ ray_button(struct zms_ui_base* ui_base, uint32_t serial, uint32_t time,
   return true;
 }
 
+static bool
+keyboard_enter(
+    struct zms_ui_base* ui_base, uint32_t serial, struct wl_array* keys)
+{
+  Z_UNUSED(serial);
+  Z_UNUSED(keys);
+  struct zms_screen* screen = ui_base->user_data;
+
+  zms_seat_notify_keyboard_enter(screen->monitor->compositor->seat);
+
+  return true;
+}
+
+static bool
+keyboard_leave(struct zms_ui_base* ui_base, uint32_t serial)
+{
+  Z_UNUSED(serial);
+  struct zms_screen* screen = ui_base->user_data;
+
+  zms_seat_notify_keyboard_leave(screen->monitor->compositor->seat);
+
+  return true;
+}
+
+static bool
+keyboard_key(struct zms_ui_base* ui_base, uint32_t serial, uint32_t time,
+    uint32_t key, uint32_t state)
+{
+  struct zms_screen* screen = ui_base->user_data;
+
+  zms_seat_notify_keyboard_key(
+      screen->monitor->compositor->seat, serial, time, key, state);
+
+  return true;
+}
+
+static bool
+keyboard_modifiers(struct zms_ui_base* ui_base, uint32_t serial,
+    uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked,
+    uint32_t group)
+{
+  struct zms_screen* screen = ui_base->user_data;
+
+  zms_seat_notify_keyboard_modifiers(screen->monitor->compositor->seat, serial,
+      mods_depressed, mods_latched, mods_locked, group);
+
+  return true;
+}
+
 static void
 ui_setup(struct zms_ui_base* ui_base)
 {
@@ -227,6 +276,10 @@ static const struct zms_ui_base_interface ui_base_interface = {
     .ray_leave = ray_leave,
     .ray_motion = ray_motion,
     .ray_button = ray_button,
+    .keyboard_enter = keyboard_enter,
+    .keyboard_leave = keyboard_leave,
+    .keyboard_key = keyboard_key,
+    .keyboard_modifiers = keyboard_modifiers,
 };
 
 static void

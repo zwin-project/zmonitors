@@ -29,6 +29,19 @@ bool zms_ui_base_propagate_ray_motion(
 bool zms_ui_base_propagate_ray_button(struct zms_ui_base* ui_base,
     uint32_t serial, uint32_t time, uint32_t button, uint32_t state);
 
+bool zms_ui_base_propagate_keyboard_enter(
+    struct zms_ui_base* ui_base, uint32_t serial, struct wl_array* keys);
+
+bool zms_ui_base_propagate_keyboard_leave(
+    struct zms_ui_base* ui_base, uint32_t serial);
+
+bool zms_ui_base_propagate_keyboard_key(struct zms_ui_base* ui_base,
+    uint32_t serial, uint32_t time, uint32_t key, uint32_t state);
+
+bool zms_ui_base_propagate_keyboard_modifiers(struct zms_ui_base* ui_base,
+    uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched,
+    uint32_t mods_locked, uint32_t group);
+
 bool zms_ui_base_propagate_cuboid_window_moved(
     struct zms_ui_base* ui_base, vec3 face_direction);
 

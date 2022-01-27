@@ -13,6 +13,8 @@ srcs_zmonitors_server = [
   'data-device-manager.c',
   'data-source.c',
   'frame-callback.c',
+  'keyboard.c',
+  'keyboard-client.c',
   'move-grab.c',
   'pointer.c',
   'pointer-client.c',

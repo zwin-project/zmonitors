@@ -137,7 +137,10 @@ zms_pointer_client_resource_create(struct zms_pointer_client *pointer_client,
   struct wl_resource *resource;
 
   resource = wl_resource_create(client, &wl_pointer_interface, 7, id);
-  if (resource == NULL) goto err;
+  if (resource == NULL) {
+    wl_client_post_no_memory(client);
+    goto err;
+  }
 
   wl_list_insert(
       &pointer_client->resource_list, wl_resource_get_link(resource));
@@ -157,7 +160,10 @@ zms_pointer_client_inert_resource_create(struct wl_client *client, uint32_t id)
   struct wl_resource *resource;
 
   resource = wl_resource_create(client, &wl_pointer_interface, 7, id);
-  if (resource == NULL) goto err;
+  if (resource == NULL) {
+    wl_client_post_no_memory(client);
+    goto err;
+  }
 
   wl_resource_set_implementation(resource, &pointer_interface, NULL, NULL);
 
@@ -167,8 +173,7 @@ err:
   return NULL;
 }
 
-ZMS_EXPORT
-struct zms_pointer_client *
+ZMS_EXPORT struct zms_pointer_client *
 zms_pointer_client_find(struct wl_client *client, struct zms_pointer *pointer)
 {
   struct zms_pointer_client *pointer_client;

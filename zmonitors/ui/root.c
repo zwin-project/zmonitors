@@ -45,6 +45,38 @@ zms_ui_root_ray_button(
 }
 
 static void
+zms_ui_root_keyboard_enter(void* data, uint32_t serial, struct wl_array* keys)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_keyboard_enter(root->base, serial, keys);
+}
+
+static void
+zms_ui_root_keyboard_leave(void* data, uint32_t serial)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_keyboard_leave(root->base, serial);
+}
+
+static void
+zms_ui_root_keyboard_key(
+    void* data, uint32_t serial, uint32_t time, uint32_t key, uint32_t state)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_keyboard_key(root->base, serial, time, key, state);
+}
+
+static void
+zms_ui_root_keyboard_modifiers(void* data, uint32_t serial,
+    uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked,
+    uint32_t group)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_keyboard_modifiers(
+      root->base, serial, mods_depressed, mods_latched, mods_locked, group);
+}
+
+static void
 zms_ui_root_cuboid_window_moved(void* data, vec3 face_direction)
 {
   struct zms_ui_root* root = data;
@@ -57,6 +89,10 @@ static const struct zms_cuboid_window_interface cuboid_window_interface = {
         .ray_leave = zms_ui_root_ray_leave,
         .ray_motion = zms_ui_root_ray_motion,
         .ray_button = zms_ui_root_ray_button,
+        .keyboard_enter = zms_ui_root_keyboard_enter,
+        .keyboard_leave = zms_ui_root_keyboard_leave,
+        .keyboard_key = zms_ui_root_keyboard_key,
+        .keyboard_modifiers = zms_ui_root_keyboard_modifiers,
     },
     .moved = zms_ui_root_cuboid_window_moved,
 };
