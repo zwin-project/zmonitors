@@ -177,6 +177,76 @@ zms_ui_base_propagate_ray_button(struct zms_ui_base* ui_base, uint32_t serial,
 }
 
 ZMS_EXPORT bool
+zms_ui_base_propagate_keyboard_enter(
+    struct zms_ui_base* ui_base, uint32_t serial, struct wl_array* keys)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_keyboard_enter(child, serial, keys))
+      return false;
+  }
+
+  if (ui_base->interface->keyboard_enter)
+    return ui_base->interface->keyboard_enter(ui_base, serial, keys);
+
+  return true;
+}
+
+ZMS_EXPORT bool
+zms_ui_base_propagate_keyboard_leave(
+    struct zms_ui_base* ui_base, uint32_t serial)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_keyboard_leave(child, serial)) return false;
+  }
+
+  if (ui_base->interface->keyboard_leave)
+    return ui_base->interface->keyboard_leave(ui_base, serial);
+
+  return true;
+}
+
+ZMS_EXPORT bool
+zms_ui_base_propagate_keyboard_key(struct zms_ui_base* ui_base, uint32_t serial,
+    uint32_t time, uint32_t key, uint32_t state)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_keyboard_key(child, serial, time, key, state))
+      return false;
+  }
+
+  if (ui_base->interface->keyboard_key)
+    return ui_base->interface->keyboard_key(ui_base, serial, time, key, state);
+
+  return true;
+}
+
+ZMS_EXPORT bool
+zms_ui_base_propagate_keyboard_modifiers(struct zms_ui_base* ui_base,
+    uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched,
+    uint32_t mods_locked, uint32_t group)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_keyboard_modifiers(
+            child, serial, mods_depressed, mods_latched, mods_locked, group))
+      return false;
+  }
+
+  if (ui_base->interface->keyboard_modifiers)
+    return ui_base->interface->keyboard_modifiers(
+        ui_base, serial, mods_depressed, mods_latched, mods_locked, group);
+
+  return true;
+}
+
+ZMS_EXPORT bool
 zms_ui_base_propagate_cuboid_window_moved(
     struct zms_ui_base* ui_base, vec3 face_direction)
 {

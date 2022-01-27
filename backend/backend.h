@@ -6,10 +6,12 @@
 #include <zigen-opengl-client-protocol.h>
 #include <zigen-shell-client-protocol.h>
 
+#include "keyboard.h"
+#include "ray.h"
 #include "zmonitors-backend.h"
 
 struct zms_backend {
-  void* uer_data;
+  void* user_data;
   const struct zms_backend_interface* interface; /* nonnull */
 
   struct wl_display* display;
@@ -21,7 +23,8 @@ struct zms_backend {
   struct wl_shm* shm;
   struct zgn_opengl* opengl;
 
-  struct zms_ray* ray; /* nullable */
+  struct zms_ray* ray;                   /* nullable */
+  struct zms_backend_keyboard* keyboard; /* nullable */
 };
 
 #endif  //  ZMONITORS_BACKEND_BACKEND_H

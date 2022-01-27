@@ -1,8 +1,10 @@
 #include "seat.h"
 
+#include <unistd.h>
 #include <zmonitors-server.h>
 
 #include "compositor.h"
+#include "keyboard-client.h"
 #include "output.h"
 #include "pointer-client.h"
 
@@ -23,13 +25,19 @@ zms_seat_protocol_get_pointer(
 
 static void
 zms_seat_protocol_get_keyboard(
-    struct wl_client* client, struct wl_resource* resource, uint32_t id)
+    struct wl_client* client, struct wl_resource* seat_resource, uint32_t id)
 {
-  // TODO:
-  zms_log("request not implemented yet: wl_seat.get_keyboard\n");
-  Z_UNUSED(client);
-  Z_UNUSED(resource);
-  Z_UNUSED(id);
+  struct zms_keyboard_client* keyboard_client;
+  struct zms_seat* seat = wl_resource_get_user_data(seat_resource);
+  struct wl_resource* resource;
+
+  if (seat->priv->keyboard) {
+    keyboard_client = zms_keyboard_client_ensure(client, seat->priv->keyboard);
+    resource = zms_keyboard_client_resource_create(keyboard_client, client, id);
+    zms_keyboard_send_keymap_to_resource(seat->priv->keyboard, resource);
+  } else {
+    zms_keyboard_client_inert_resource_create(client, id);
+  }
 }
 
 static void
@@ -66,6 +74,7 @@ zms_seat_send_capabilities(
   uint32_t capabilities = 0;
 
   if (seat->priv->pointer) capabilities |= WL_SEAT_CAPABILITY_POINTER;
+  if (seat->priv->keyboard) capabilities |= WL_SEAT_CAPABILITY_KEYBOARD;
 
   wl_resource_for_each(resource, &seat->priv->resource_list)
   {
@@ -182,8 +191,25 @@ zms_seat_release_pointer(struct zms_seat* seat)
   zms_seat_send_capabilities(seat, NULL);
 }
 
-ZMS_EXPORT
-void
+ZMS_EXPORT void
+zms_seat_init_keyboard(struct zms_seat* seat)
+{
+  if (seat->priv->keyboard) return;
+
+  seat->priv->keyboard = zms_keyboard_create(seat);
+  zms_seat_send_capabilities(seat, NULL);
+}
+
+ZMS_EXPORT void
+zms_seat_release_keyboard(struct zms_seat* seat)
+{
+  if (seat->priv->keyboard == NULL) return;
+  zms_keyboard_destroy(seat->priv->keyboard);
+  seat->priv->keyboard = NULL;
+  zms_seat_send_capabilities(seat, NULL);
+}
+
+ZMS_EXPORT void
 zms_seat_notify_pointer_motion_abs(
     struct zms_seat* seat, struct zms_output* output, vec2 pos, uint32_t time)
 {
@@ -233,4 +259,60 @@ zms_seat_notify_pointer_leave(struct zms_seat* seat)
 
   pointer->grab_serial = 0;
   pointer->button_count = 0;
+}
+
+ZMS_EXPORT void
+zms_seat_notify_keyboard_enter(struct zms_seat* seat)
+{
+  struct zms_keyboard* key_board = seat->priv->keyboard;
+  struct zms_pointer* pointer = seat->priv->pointer;
+  struct zms_view* focus_view;
+
+  if (key_board == NULL || pointer == NULL) return;
+
+  focus_view = pointer->focus_view_ref.data;
+  if (focus_view == NULL) return;
+
+  zms_keyboard_set_focus(key_board, focus_view);
+}
+
+ZMS_EXPORT void
+zms_seat_notify_keyboard_leave(struct zms_seat* seat)
+{
+  struct zms_keyboard* keyboard = seat->priv->keyboard;
+  if (keyboard == NULL) return;
+
+  zms_keyboard_set_focus(keyboard, NULL);
+}
+
+ZMS_EXPORT void
+zms_seat_notify_keyboard_key(struct zms_seat* seat, uint32_t serial,
+    uint32_t time, uint32_t key, uint32_t state)
+{
+  struct zms_keyboard* keyboard = seat->priv->keyboard;
+  if (keyboard == NULL) return;
+
+  zms_keyboard_send_key(keyboard, serial, time, key, state);
+}
+
+ZMS_EXPORT void
+zms_seat_notify_keyboard_modifiers(struct zms_seat* seat, uint32_t serial,
+    uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked,
+    uint32_t group)
+{
+  struct zms_keyboard* keyboard = seat->priv->keyboard;
+  if (keyboard == NULL) return;
+
+  zms_keyboard_send_modifiers(
+      keyboard, serial, mods_depressed, mods_latched, mods_locked, group);
+}
+
+ZMS_EXPORT void
+zms_seat_notify_keyboard_keymap(
+    struct zms_seat* seat, uint32_t format, int32_t fd, uint32_t size)
+{
+  struct zms_keyboard* keyboard = seat->priv->keyboard;
+  if (keyboard == NULL) return;
+
+  zms_keyboard_set_keymap(keyboard, fd, size, format);
 }

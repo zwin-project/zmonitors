@@ -20,9 +20,36 @@ zms_app_lose_ray_cap(void* data)
   zms_seat_release_pointer(app->compositor->seat);
 }
 
+static void
+zms_app_gain_keyboard_cap(void* data)
+{
+  struct zms_app* app = data;
+
+  zms_seat_init_keyboard(app->compositor->seat);
+}
+
+static void
+zms_app_lose_keyboard_cap(void* data)
+{
+  struct zms_app* app = data;
+
+  zms_seat_release_keyboard(app->compositor->seat);
+}
+
+static void
+zms_app_keyboard_keymap(void* data, uint32_t format, int32_t fd, uint32_t size)
+{
+  struct zms_app* app = data;
+
+  zms_seat_notify_keyboard_keymap(app->compositor->seat, format, fd, size);
+}
+
 static const struct zms_backend_interface backend_interface = {
     .gain_ray_capability = zms_app_gain_ray_cap,
     .lose_ray_capability = zms_app_lose_ray_cap,
+    .gain_keyboard_capability = zms_app_gain_keyboard_cap,
+    .lose_keyboard_capability = zms_app_lose_keyboard_cap,
+    .keyboard_keymap = zms_app_keyboard_keymap,
 };
 
 static int

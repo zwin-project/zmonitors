@@ -4,6 +4,7 @@
 #include <zmonitors-util.h>
 
 #include "cursor-sprite.h"
+#include "keyboard.h"
 #include "output.h"
 #include "pointer-client.h"
 #include "seat.h"
@@ -62,9 +63,14 @@ default_grab_button(struct zms_pointer_grab* grab, uint32_t time,
     uint32_t button, uint32_t state, uint32_t serial)
 {
   struct zms_pointer* pointer = grab->pointer;
+  struct zms_keyboard* keyboard = pointer->seat->priv->keyboard;
   struct zms_view* view = pointer->focus_view_ref.data;
   struct wl_client* client;
   struct zms_pointer_client* pointer_client;
+
+  if (keyboard && pointer->button_count == 1 &&
+      state == WL_POINTER_BUTTON_STATE_PRESSED)
+    zms_keyboard_set_focus(keyboard, view);
 
   if (view == NULL) return;
 

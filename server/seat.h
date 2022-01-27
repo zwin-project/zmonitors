@@ -5,6 +5,7 @@
 #include <zmonitors-server.h>
 
 #include "compositor.h"
+#include "keyboard.h"
 #include "pointer.h"
 
 struct zms_seat_private {
@@ -14,7 +15,8 @@ struct zms_seat_private {
   const char *name;
   struct wl_list resource_list;
 
-  struct zms_pointer *pointer; /* nullable */
+  struct zms_pointer *pointer;   /* nullable */
+  struct zms_keyboard *keyboard; /* nullable */
 };
 
 struct zms_seat *zms_seat_create(struct zms_compositor *compositor);
