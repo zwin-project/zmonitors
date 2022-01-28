@@ -140,6 +140,20 @@ data_device_enter(struct zms_ui_base* ui_base, uint32_t serial, vec3 origin,
         screen->monitor->compositor->seat, screen->output, pos);
     screen->data_device_focus = true;
   }
+
+  return true;
+}
+
+static bool
+keyboard_enter(
+    struct zms_ui_base* ui_base, uint32_t serial, struct wl_array* keys)
+{
+  Z_UNUSED(serial);
+  Z_UNUSED(keys);
+  struct zms_screen* screen = ui_base->user_data;
+
+  zms_seat_notify_keyboard_enter(screen->monitor->compositor->seat);
+
   return true;
 }
 
@@ -157,6 +171,17 @@ data_device_leave(struct zms_ui_base* ui_base)
         screen->monitor->compositor->seat->data_device);
 
   screen->data_device_focus = false;
+
+  return true;
+}
+
+static bool
+keyboard_leave(struct zms_ui_base* ui_base, uint32_t serial)
+{
+  Z_UNUSED(serial);
+  struct zms_screen* screen = ui_base->user_data;
+
+  zms_seat_notify_keyboard_leave(screen->monitor->compositor->seat);
 
   return true;
 }
@@ -193,11 +218,36 @@ data_device_motion_abs(
 }
 
 static bool
+keyboard_key(struct zms_ui_base* ui_base, uint32_t serial, uint32_t time,
+    uint32_t key, uint32_t state)
+{
+  struct zms_screen* screen = ui_base->user_data;
+
+  zms_seat_notify_keyboard_key(
+      screen->monitor->compositor->seat, serial, time, key, state);
+
+  return true;
+}
+
+static bool
 data_device_drop(struct zms_ui_base* ui_base)
 {
   struct zms_screen* screen = ui_base->user_data;
 
   zms_data_device_notify_drop(screen->monitor->compositor->seat->data_device);
+
+  return true;
+}
+
+static bool
+keyboard_modifiers(struct zms_ui_base* ui_base, uint32_t serial,
+    uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked,
+    uint32_t group)
+{
+  struct zms_screen* screen = ui_base->user_data;
+
+  zms_seat_notify_keyboard_modifiers(screen->monitor->compositor->seat, serial,
+      mods_depressed, mods_latched, mods_locked, group);
 
   return true;
 }
@@ -341,6 +391,10 @@ static const struct zms_ui_base_interface ui_base_interface = {
     .data_device_leave = data_device_leave,
     .data_device_motion_abs = data_device_motion_abs,
     .data_device_drop = data_device_drop,
+    .keyboard_enter = keyboard_enter,
+    .keyboard_leave = keyboard_leave,
+    .keyboard_key = keyboard_key,
+    .keyboard_modifiers = keyboard_modifiers,
 };
 
 static void

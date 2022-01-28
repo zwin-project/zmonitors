@@ -27,6 +27,17 @@ seat_capabilities(void* data, struct zgn_seat* seat, uint32_t capability)
     backend->ray = NULL;
     backend->interface->lose_ray_capability(backend->user_data);
   }
+
+  if (capability & ZGN_SEAT_CAPABILITY_KEYBOARD && backend->keyboard == NULL) {
+    backend->keyboard = zms_backend_keyboard_create(backend);
+    backend->interface->gain_keyboard_capability(backend->user_data);
+  }
+
+  if (!(capability & ZGN_SEAT_CAPABILITY_KEYBOARD) && backend->keyboard) {
+    zms_backend_keyboard_destroy(backend->keyboard);
+    backend->keyboard = NULL;
+    backend->interface->lose_keyboard_capability(backend->user_data);
+  }
 }
 
 static const struct zgn_seat_listener seat_listener = {

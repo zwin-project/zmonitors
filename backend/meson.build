@@ -12,6 +12,7 @@ srcs_zmonitors_backend = [
   'data-offer.c',
   'data-source.c',
   'frame-callback.c',
+  'keyboard.c',
   'opengl-component.c',
   'opengl-shader-program.c',
   'opengl-texture.c',
