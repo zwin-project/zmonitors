@@ -192,6 +192,22 @@ zms_ui_base_propagate_data_device_enter(struct zms_ui_base* ui_base,
   if (ui_base->interface->data_device_enter)
     return ui_base->interface->data_device_enter(
         ui_base, serial, origin, direction, data_offer_proxy);
+  return true;
+}
+
+ZMS_EXPORT bool
+zms_ui_base_propagate_keyboard_enter(
+    struct zms_ui_base* ui_base, uint32_t serial, struct wl_array* keys)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_keyboard_enter(child, serial, keys))
+      return false;
+  }
+
+  if (ui_base->interface->keyboard_enter)
+    return ui_base->interface->keyboard_enter(ui_base, serial, keys);
 
   return true;
 }
@@ -207,6 +223,22 @@ zms_ui_base_propagate_data_device_leave(struct zms_ui_base* ui_base)
 
   if (ui_base->interface->data_device_leave)
     return ui_base->interface->data_device_leave(ui_base);
+
+  return true;
+}
+
+ZMS_EXPORT bool
+zms_ui_base_propagate_keyboard_leave(
+    struct zms_ui_base* ui_base, uint32_t serial)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_keyboard_leave(child, serial)) return false;
+  }
+
+  if (ui_base->interface->keyboard_leave)
+    return ui_base->interface->keyboard_leave(ui_base, serial);
 
   return true;
 }
@@ -231,6 +263,23 @@ zms_ui_base_propagate_data_device_motion_abs(
 }
 
 ZMS_EXPORT bool
+zms_ui_base_propagate_keyboard_key(struct zms_ui_base* ui_base, uint32_t serial,
+    uint32_t time, uint32_t key, uint32_t state)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_keyboard_key(child, serial, time, key, state))
+      return false;
+  }
+
+  if (ui_base->interface->keyboard_key)
+    return ui_base->interface->keyboard_key(ui_base, serial, time, key, state);
+
+  return true;
+}
+
+ZMS_EXPORT bool
 zms_ui_base_propagate_data_device_drop(struct zms_ui_base* ui_base)
 {
   struct zms_ui_base* child;
@@ -241,6 +290,26 @@ zms_ui_base_propagate_data_device_drop(struct zms_ui_base* ui_base)
 
   if (ui_base->interface->data_device_drop)
     return ui_base->interface->data_device_drop(ui_base);
+
+  return true;
+}
+
+ZMS_EXPORT bool
+zms_ui_base_propagate_keyboard_modifiers(struct zms_ui_base* ui_base,
+    uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched,
+    uint32_t mods_locked, uint32_t group)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_keyboard_modifiers(
+            child, serial, mods_depressed, mods_latched, mods_locked, group))
+      return false;
+  }
+
+  if (ui_base->interface->keyboard_modifiers)
+    return ui_base->interface->keyboard_modifiers(
+        ui_base, serial, mods_depressed, mods_latched, mods_locked, group);
 
   return true;
 }

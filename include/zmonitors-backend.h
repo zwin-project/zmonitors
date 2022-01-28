@@ -14,6 +14,10 @@ struct zms_backend;
 struct zms_backend_interface {
   void (*gain_ray_capability)(void* data);
   void (*lose_ray_capability)(void* data);
+  void (*gain_keyboard_capability)(void* data);
+  void (*lose_keyboard_capability)(void* data);
+  void (*keyboard_keymap)(
+      void* data, uint32_t format, int32_t fd, uint32_t size);
   void (*data_offer)(void* data, struct zms_backend_data_offer* data_offer);
 };
 
@@ -48,6 +52,13 @@ struct zms_virtual_object_interface {
   void (*data_device_motion_abs)(
       void* data, uint32_t time, vec3 origin, vec3 direction);
   void (*data_device_drop)(void* data);
+  void (*keyboard_enter)(void* data, uint32_t serial, struct wl_array* keys);
+  void (*keyboard_leave)(void* data, uint32_t serial);
+  void (*keyboard_key)(
+      void* data, uint32_t serial, uint32_t time, uint32_t key, uint32_t state);
+  void (*keyboard_modifiers)(void* data, uint32_t serial,
+      uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked,
+      uint32_t group);
 };
 
 /* cuboid window */

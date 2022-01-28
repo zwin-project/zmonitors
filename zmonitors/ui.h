@@ -29,6 +29,15 @@ struct zms_ui_base_interface {
   bool (*data_device_motion_abs)(struct zms_ui_base* ui_base, uint32_t time,
       vec3 origin, vec3 direction);                      /* nullable */
   bool (*data_device_drop)(struct zms_ui_base* ui_base); /* nullable */
+  bool (*keyboard_enter)(struct zms_ui_base* ui_base, uint32_t serial,
+      struct wl_array* keys); /* nullable */
+  bool (*keyboard_leave)(
+      struct zms_ui_base* ui_base, uint32_t serial); /* nullable */
+  bool (*keyboard_key)(struct zms_ui_base* ui_base, uint32_t serial,
+      uint32_t time, uint32_t key, uint32_t state); /* nullable */
+  bool (*keyboard_modifiers)(struct zms_ui_base* ui_base, uint32_t serial,
+      uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked,
+      uint32_t group); /* nullable */
   bool (*cuboid_window_moved)(
       struct zms_ui_base* ui_base, vec3 face_direction); /* nullable */
 };
