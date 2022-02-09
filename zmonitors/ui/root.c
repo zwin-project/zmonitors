@@ -45,6 +45,27 @@ zms_ui_root_ray_button(
 }
 
 static void
+zms_ui_root_ray_axis(void* data, uint32_t time, uint32_t axis, float value)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_ray_axis(root->base, time, axis, value);
+}
+
+static void
+zms_ui_root_ray_frame(void* data)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_ray_frame(root->base);
+}
+
+static void
+zms_ui_root_ray_axis_discrete(void* data, uint32_t axis, int32_t discrete)
+{
+  struct zms_ui_root* root = data;
+  zms_ui_base_propagate_ray_axis_discrete(root->base, axis, discrete);
+}
+
+static void
 zms_ui_root_data_device_enter(void* data, uint32_t serial, vec3 origin,
     vec3 direction, void* data_offer_user_data)
 {
@@ -122,6 +143,9 @@ static const struct zms_cuboid_window_interface cuboid_window_interface = {
         .ray_leave = zms_ui_root_ray_leave,
         .ray_motion = zms_ui_root_ray_motion,
         .ray_button = zms_ui_root_ray_button,
+        .ray_axis = zms_ui_root_ray_axis,
+        .ray_frame = zms_ui_root_ray_frame,
+        .ray_axis_discrete = zms_ui_root_ray_axis_discrete,
         .data_device_enter = zms_ui_root_data_device_enter,
         .data_device_leave = zms_ui_root_data_device_leave,
         .data_device_motion_abs = zms_ui_root_data_device_motion_abs,

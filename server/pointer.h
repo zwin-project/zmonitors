@@ -18,6 +18,11 @@ struct zms_pointer_grab_interface {
       uint32_t time, vec2 pos);
   void (*button)(struct zms_pointer_grab* grab, uint32_t time, uint32_t button,
       uint32_t state, uint32_t serial);
+  void (*axis)(
+      struct zms_pointer_grab* grab, uint32_t time, uint32_t axis, float value);
+  void (*frame)(struct zms_pointer_grab* garb);
+  void (*axis_discrete)(
+      struct zms_pointer_grab* garb, uint32_t axis, int32_t discrete);
   void (*cancel)(struct zms_pointer_grab* grab);
 };
 

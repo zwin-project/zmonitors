@@ -22,6 +22,11 @@ struct zms_ui_base_interface {
       vec3 direction); /* nullable */
   bool (*ray_button)(struct zms_ui_base* ui_base, uint32_t serial,
       uint32_t time, uint32_t button, uint32_t state); /* nullable */
+  bool (*ray_axis)(struct zms_ui_base* ui_base, uint32_t time, uint32_t axis,
+      float value);                               /* nullable */
+  bool (*ray_frame)(struct zms_ui_base* ui_base); /* nullable */
+  bool (*ray_axis_discrete)(struct zms_ui_base* ui_base, uint32_t axis,
+      int32_t discrete); /* nullable */
   bool (*data_device_enter)(struct zms_ui_base* ui_base, uint32_t serial,
       vec3 origin, vec3 direction,
       struct zms_data_offer_proxy* data_offer_proxy);     /* nullable */

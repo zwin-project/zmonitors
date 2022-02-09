@@ -243,3 +243,32 @@ zms_pointer_client_send_button(struct zms_pointer_client *pointer_client,
   wl_resource_for_each(resource, &pointer_client->resource_list)
       wl_pointer_send_button(resource, serial, time, button, state);
 }
+
+ZMS_EXPORT void
+zms_pointer_client_send_axis(struct zms_pointer_client *pointer_client,
+    uint32_t time, uint32_t axis, float value)
+{
+  struct wl_resource *resource;
+
+  wl_resource_for_each(resource, &pointer_client->resource_list)
+      wl_pointer_send_axis(resource, time, axis, wl_fixed_from_double(value));
+}
+
+ZMS_EXPORT void
+zms_pointer_client_send_frame(struct zms_pointer_client *pointer_client)
+{
+  struct wl_resource *resource;
+
+  wl_resource_for_each(resource, &pointer_client->resource_list)
+      wl_pointer_send_frame(resource);
+}
+
+ZMS_EXPORT void
+zms_pointer_client_send_axis_discrete(
+    struct zms_pointer_client *pointer_client, uint32_t axis, int32_t discrete)
+{
+  struct wl_resource *resource;
+
+  wl_resource_for_each(resource, &pointer_client->resource_list)
+      wl_pointer_send_axis_discrete(resource, axis, discrete);
+}

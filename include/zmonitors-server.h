@@ -140,6 +140,14 @@ void zms_seat_notify_pointer_motion_abs(
 void zms_seat_notify_pointer_button(struct zms_seat *seat, uint32_t time,
     uint32_t button, uint32_t state, uint32_t serial);
 
+void zms_seat_notify_pointer_axis(
+    struct zms_seat *seat, uint32_t time, uint32_t axis, float value);
+
+void zms_seat_notify_pointer_frame(struct zms_seat *seat);
+
+void zms_seat_notify_pointer_axis_discrete(
+    struct zms_seat *seat, uint32_t axis, int32_t discrete);
+
 void zms_seat_notify_pointer_leave(struct zms_seat *seat);
 
 void zms_seat_notify_start_drag(struct zms_seat *seat, uint32_t enter_serial);

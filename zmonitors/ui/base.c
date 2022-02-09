@@ -177,6 +177,54 @@ zms_ui_base_propagate_ray_button(struct zms_ui_base* ui_base, uint32_t serial,
 }
 
 ZMS_EXPORT bool
+zms_ui_base_propagate_ray_axis(
+    struct zms_ui_base* ui_base, uint32_t time, uint32_t axis, float value)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_ray_axis(child, time, axis, value)) return false;
+  }
+
+  if (ui_base->interface->ray_axis)
+    return ui_base->interface->ray_axis(ui_base, time, axis, value);
+
+  return true;
+}
+
+ZMS_EXPORT bool
+zms_ui_base_propagate_ray_frame(struct zms_ui_base* ui_base)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_ray_frame(child)) return false;
+  }
+
+  if (ui_base->interface->ray_frame)
+    return ui_base->interface->ray_frame(ui_base);
+
+  return true;
+}
+
+ZMS_EXPORT bool
+zms_ui_base_propagate_ray_axis_discrete(
+    struct zms_ui_base* ui_base, uint32_t axis, int32_t discrete)
+{
+  struct zms_ui_base* child;
+  wl_list_for_each(child, &ui_base->children, link)
+  {
+    if (!zms_ui_base_propagate_ray_axis_discrete(child, axis, discrete))
+      return false;
+  }
+
+  if (ui_base->interface->ray_axis_discrete)
+    return ui_base->interface->ray_axis_discrete(ui_base, axis, discrete);
+
+  return true;
+}
+
+ZMS_EXPORT bool
 zms_ui_base_propagate_data_device_enter(struct zms_ui_base* ui_base,
     uint32_t serial, vec3 origin, vec3 direction,
     struct zms_data_offer_proxy* data_offer_proxy)

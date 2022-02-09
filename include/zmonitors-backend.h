@@ -46,6 +46,9 @@ struct zms_virtual_object_interface {
   void (*ray_motion)(void* data, uint32_t time, vec3 origin, vec3 direction);
   void (*ray_button)(void* data, uint32_t serial, uint32_t time,
       uint32_t button, uint32_t state);
+  void (*ray_axis)(void* data, uint32_t time, uint32_t axis, float value);
+  void (*ray_frame)(void* data);
+  void (*ray_axis_discrete)(void* data, uint32_t axis, int32_t discrete);
   void (*data_device_enter)(void* data, uint32_t serial, vec3 origin,
       vec3 direction, void* data_offer_user_data);
   void (*data_device_leave)(void* data);
