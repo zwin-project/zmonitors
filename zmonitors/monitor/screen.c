@@ -121,6 +121,44 @@ ray_button(struct zms_ui_base* ui_base, uint32_t serial, uint32_t time,
 }
 
 static bool
+ray_axis(struct zms_ui_base* ui_base, uint32_t time, uint32_t axis, float value)
+{
+  struct zms_screen* screen = ui_base->user_data;
+
+  if (screen->ray_focus) {
+    zms_seat_notify_pointer_axis(
+        screen->monitor->compositor->seat, time, axis, value);
+  }
+
+  return true;
+}
+
+static bool
+ray_frame(struct zms_ui_base* ui_base)
+{
+  struct zms_screen* screen = ui_base->user_data;
+
+  if (screen->ray_focus) {
+    zms_seat_notify_pointer_frame(screen->monitor->compositor->seat);
+  }
+
+  return true;
+}
+
+static bool
+ray_axis_discrete(struct zms_ui_base* ui_base, uint32_t axis, int32_t discrete)
+{
+  struct zms_screen* screen = ui_base->user_data;
+
+  if (screen->ray_focus) {
+    zms_seat_notify_pointer_axis_discrete(
+        screen->monitor->compositor->seat, axis, discrete);
+  }
+
+  return true;
+}
+
+static bool
 data_device_enter(struct zms_ui_base* ui_base, uint32_t serial, vec3 origin,
     vec3 direction, struct zms_data_offer_proxy* data_offer_proxy)
 {
@@ -387,6 +425,9 @@ static const struct zms_ui_base_interface ui_base_interface = {
     .ray_leave = ray_leave,
     .ray_motion = ray_motion,
     .ray_button = ray_button,
+    .ray_axis = ray_axis,
+    .ray_frame = ray_frame,
+    .ray_axis_discrete = ray_axis_discrete,
     .data_device_enter = data_device_enter,
     .data_device_leave = data_device_leave,
     .data_device_motion_abs = data_device_motion_abs,

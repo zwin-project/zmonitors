@@ -87,6 +87,62 @@ default_grab_button(struct zms_pointer_grab* grab, uint32_t time,
 }
 
 static void
+default_grab_axis(
+    struct zms_pointer_grab* grab, uint32_t time, uint32_t axis, float value)
+{
+  struct zms_pointer* pointer = grab->pointer;
+  struct zms_view* view = pointer->focus_view_ref.data;
+  struct wl_client* client;
+  struct zms_pointer_client* pointer_client;
+
+  if (view == NULL) return;
+
+  client = wl_resource_get_client(view->priv->surface->resource);
+  pointer_client = zms_pointer_client_find(client, pointer);
+
+  if (pointer_client == NULL) return;
+
+  zms_pointer_client_send_axis(pointer_client, time, axis, value);
+}
+
+static void
+default_grab_frame(struct zms_pointer_grab* grab)
+{
+  struct zms_pointer* pointer = grab->pointer;
+  struct zms_view* view = pointer->focus_view_ref.data;
+  struct wl_client* client;
+  struct zms_pointer_client* pointer_client;
+
+  if (view == NULL) return;
+
+  client = wl_resource_get_client(view->priv->surface->resource);
+  pointer_client = zms_pointer_client_find(client, pointer);
+
+  if (pointer_client == NULL) return;
+
+  zms_pointer_client_send_frame(pointer_client);
+}
+
+static void
+default_grab_axis_discrete(
+    struct zms_pointer_grab* grab, uint32_t axis, int32_t discrete)
+{
+  struct zms_pointer* pointer = grab->pointer;
+  struct zms_view* view = pointer->focus_view_ref.data;
+  struct wl_client* client;
+  struct zms_pointer_client* pointer_client;
+
+  if (view == NULL) return;
+
+  client = wl_resource_get_client(view->priv->surface->resource);
+  pointer_client = zms_pointer_client_find(client, pointer);
+
+  if (pointer_client == NULL) return;
+
+  zms_pointer_client_send_axis_discrete(pointer_client, axis, discrete);
+}
+
+static void
 default_grab_cancel(struct zms_pointer_grab* grab)
 {
   Z_UNUSED(grab);
@@ -96,6 +152,9 @@ static const struct zms_pointer_grab_interface default_grab_interface = {
     .focus = default_grab_focus,
     .motion_abs = default_grab_motion_abs,
     .button = default_grab_button,
+    .axis = default_grab_axis,
+    .frame = default_grab_frame,
+    .axis_discrete = default_grab_axis_discrete,
     .cancel = default_grab_cancel,
 };
 

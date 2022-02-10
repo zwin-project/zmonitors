@@ -266,6 +266,41 @@ zms_seat_notify_pointer_button(struct zms_seat* seat, uint32_t time,
 }
 
 ZMS_EXPORT void
+zms_seat_notify_pointer_axis(
+    struct zms_seat* seat, uint32_t time, uint32_t axis, float value)
+{
+  Z_UNUSED(seat);
+  struct zms_pointer* pointer = seat->priv->pointer;
+
+  if (pointer == NULL) return;
+
+  pointer->grab->interface->axis(pointer->grab, time, axis, value);
+}
+
+ZMS_EXPORT void
+zms_seat_notify_pointer_frame(struct zms_seat* seat)
+{
+  Z_UNUSED(seat);
+  struct zms_pointer* pointer = seat->priv->pointer;
+
+  if (pointer == NULL) return;
+
+  pointer->grab->interface->frame(pointer->grab);
+}
+
+ZMS_EXPORT void
+zms_seat_notify_pointer_axis_discrete(
+    struct zms_seat* seat, uint32_t axis, int32_t discrete)
+{
+  Z_UNUSED(seat);
+  struct zms_pointer* pointer = seat->priv->pointer;
+
+  if (pointer == NULL) return;
+
+  pointer->grab->interface->axis_discrete(pointer->grab, axis, discrete);
+}
+
+ZMS_EXPORT void
 zms_seat_notify_pointer_leave(struct zms_seat* seat)
 {
   struct zms_pointer* pointer = seat->priv->pointer;

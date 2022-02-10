@@ -29,6 +29,14 @@ bool zms_ui_base_propagate_ray_motion(
 bool zms_ui_base_propagate_ray_button(struct zms_ui_base* ui_base,
     uint32_t serial, uint32_t time, uint32_t button, uint32_t state);
 
+bool zms_ui_base_propagate_ray_axis(
+    struct zms_ui_base* ui_base, uint32_t time, uint32_t axis, float value);
+
+bool zms_ui_base_propagate_ray_frame(struct zms_ui_base* ui_base);
+
+bool zms_ui_base_propagate_ray_axis_discrete(
+    struct zms_ui_base* ui_base, uint32_t axis, int32_t discrete);
+
 bool zms_ui_base_propagate_data_device_enter(struct zms_ui_base* ui_base,
     uint32_t serial, vec3 origin, vec3 direction,
     struct zms_data_offer_proxy* data_offer_proxy);

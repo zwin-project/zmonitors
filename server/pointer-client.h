@@ -42,4 +42,12 @@ void zms_pointer_client_send_motion(struct zms_pointer_client* pointer_client,
 void zms_pointer_client_send_button(struct zms_pointer_client* pointer_client,
     uint32_t serial, uint32_t time, uint32_t button, uint32_t state);
 
+void zms_pointer_client_send_axis(struct zms_pointer_client* pointer_client,
+    uint32_t time, uint32_t axis, float value);
+
+void zms_pointer_client_send_frame(struct zms_pointer_client* pointer_client);
+
+void zms_pointer_client_send_axis_discrete(
+    struct zms_pointer_client* pointer_client, uint32_t axis, int32_t discrete);
+
 #endif  //  ZMONITORS_SERVER_POINTER_CLIENT_H

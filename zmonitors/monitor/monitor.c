@@ -9,7 +9,7 @@
 #include "screen.h"
 #include "ui.h"
 
-#define DEFAULT_PPM 1000
+#define DEFAULT_PPM 2000
 #define CUBOID_DEPTH 0.01
 #define CUBOID_PADDING 0.05
 #define CONTROL_BAR_PADDING 0.02

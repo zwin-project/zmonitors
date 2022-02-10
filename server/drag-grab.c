@@ -46,6 +46,31 @@ zms_drag_grab_button(struct zms_pointer_grab *grab, uint32_t time,
 }
 
 static void
+zms_drag_grab_axis(
+    struct zms_pointer_grab *grab, uint32_t time, uint32_t axis, float value)
+{
+  Z_UNUSED(grab);
+  Z_UNUSED(time);
+  Z_UNUSED(axis);
+  Z_UNUSED(value);
+}
+
+static void
+zms_drag_grab_frame(struct zms_pointer_grab *grab)
+{
+  Z_UNUSED(grab);
+}
+
+static void
+zms_drag_grab_axis_discrete(
+    struct zms_pointer_grab *grab, uint32_t axis, int32_t discrete)
+{
+  Z_UNUSED(grab);
+  Z_UNUSED(axis);
+  Z_UNUSED(discrete);
+}
+
+static void
 zms_drag_grab_cancel(struct zms_pointer_grab *grab)
 {
   struct zms_drag_grab *drag_grab = wl_container_of(grab, drag_grab, base);
@@ -66,6 +91,9 @@ static const struct zms_pointer_grab_interface drag_grab_interface = {
     .focus = zms_drag_grab_focus,
     .motion_abs = zms_drag_grab_motion_abs,
     .button = zms_drag_grab_button,
+    .axis = zms_drag_grab_axis,
+    .frame = zms_drag_grab_frame,
+    .axis_discrete = zms_drag_grab_axis_discrete,
     .cancel = zms_drag_grab_cancel,
 };
 

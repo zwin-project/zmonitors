@@ -91,11 +91,53 @@ zms_ray_protocol_button(void* data, struct zgn_ray* zgn_ray, uint32_t serial,
       ray->focus_virtual_object->user_data, serial, time, button, state);
 }
 
+static void
+zms_ray_protocol_axis(void* data, struct zgn_ray* zgn_ray, uint32_t time,
+    uint32_t axis, wl_fixed_t value)
+{
+  Z_UNUSED(zgn_ray);
+  struct zms_ray* ray = data;
+
+  if (ray->focus_virtual_object == NULL) return;
+
+  ray->focus_virtual_object->interface->ray_axis(
+      ray->focus_virtual_object->user_data, time, axis,
+      wl_fixed_to_double(value));
+}
+
+static void
+zms_ray_protocol_frame(void* data, struct zgn_ray* zgn_ray)
+{
+  Z_UNUSED(zgn_ray);
+  struct zms_ray* ray = data;
+
+  if (ray->focus_virtual_object == NULL) return;
+
+  ray->focus_virtual_object->interface->ray_frame(
+      ray->focus_virtual_object->user_data);
+}
+
+static void
+zms_ray_protocol_axis_discrete(
+    void* data, struct zgn_ray* zgn_ray, uint32_t axis, int32_t discrete)
+{
+  Z_UNUSED(zgn_ray);
+  struct zms_ray* ray = data;
+
+  if (ray->focus_virtual_object == NULL) return;
+
+  ray->focus_virtual_object->interface->ray_axis_discrete(
+      ray->focus_virtual_object->user_data, axis, discrete);
+}
+
 static const struct zgn_ray_listener ray_listener = {
     .enter = zms_ray_protocol_enter,
     .leave = zms_ray_protocol_leave,
     .motion = zms_ray_protocol_motion,
     .button = zms_ray_protocol_button,
+    .axis = zms_ray_protocol_axis,
+    .frame = zms_ray_protocol_frame,
+    .axis_discrete = zms_ray_protocol_axis_discrete,
 };
 
 ZMS_EXPORT struct zms_ray*
