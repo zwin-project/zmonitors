@@ -10,6 +10,7 @@ struct zms_backend_data_device {
   struct zgn_data_device* proxy;
   struct zms_backend* backend;
   struct zms_weak_ref focus_virtual_object_ref;
+  uint32_t enter_serial;
 };
 
 struct zms_backend_data_device* zms_backend_data_device_create(

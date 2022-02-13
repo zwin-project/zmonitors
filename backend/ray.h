@@ -8,6 +8,8 @@ struct zms_ray {
   struct zgn_ray* proxy;
   struct zms_virtual_object* focus_virtual_object;
   struct zms_listener focus_virtual_object_destroy_listener;
+
+  uint32_t enter_serial;
 };
 
 struct zms_ray* zms_ray_create(struct zms_backend* backend);

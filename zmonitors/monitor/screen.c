@@ -83,6 +83,7 @@ ray_motion(
           screen->monitor->compositor->seat, screen->output, pos);
       screen->ray_focus = true;
     }
+    zms_ray_set_length(screen->monitor->backend, d);
   } else {
     if (screen->ray_focus)
       zms_seat_notify_pointer_leave(screen->monitor->compositor->seat);
@@ -246,6 +247,7 @@ data_device_motion_abs(
           screen->monitor->compositor->seat, screen->output, pos);
       screen->data_device_focus = true;
     }
+    zms_backend_data_device_set_length(screen->monitor->backend, d);
   } else {
     if (screen->data_device_focus)
       zms_seat_notify_pointer_leave(screen->monitor->compositor->seat);

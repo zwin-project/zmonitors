@@ -42,6 +42,9 @@ zms_backend_data_device_protocol_enter(void* data,
 
   glm_vec3_from_wl_array(origin_vec, origin);
   glm_vec3_from_wl_array(direction_vec, direction);
+
+  data_device->enter_serial = serial;
+
   virtual_object->interface->data_device_enter(virtual_object->user_data,
       serial, origin_vec, direction_vec, data_offer->user_data);
 }
@@ -113,6 +116,13 @@ zms_backend_data_device_start_drag(struct zms_backend* backend,
 {
   zgn_data_device_start_drag(backend->data_device->proxy, data_source->proxy,
       virtual_object->proxy, icon ? icon->proxy : NULL, serial);
+}
+
+ZMS_EXPORT void
+zms_backend_data_device_set_length(struct zms_backend* backend, float length)
+{
+  zgn_data_device_set_length(backend->data_device->proxy,
+      backend->data_device->enter_serial, wl_fixed_from_double(length));
 }
 
 ZMS_EXPORT struct zms_backend_data_device*
