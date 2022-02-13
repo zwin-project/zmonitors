@@ -93,6 +93,7 @@ ray_motion(
   if (zms_interesect_ray_rect(origin, direction, control_bar->v0,
           control_bar->vx, control_bar->vy, pos, &d)) {
     if (!control_bar->focus) ray_focus(control_bar);
+    zms_ray_set_length(control_bar->monitor->backend, d);
   } else {
     if (control_bar->focus) ray_unfocus(control_bar);
   }

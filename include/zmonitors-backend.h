@@ -98,6 +98,10 @@ void zms_cuboid_window_move(
 void zms_cuboid_window_rotate(
     struct zms_cuboid_window* cuboid_window, versor quaternion);
 
+/* ray */
+
+void zms_ray_set_length(struct zms_backend* backend, float length);
+
 /* data offer backend */
 
 struct zms_backend_data_offer_interface {
@@ -156,6 +160,9 @@ void zms_backend_data_device_start_drag(struct zms_backend* backend,
     struct zms_backend_data_source* data_source,
     struct zms_virtual_object* virtual_object,
     struct zms_virtual_object* icon /* nullable */, uint32_t serial);
+
+void zms_backend_data_device_set_length(
+    struct zms_backend* backend, float length);
 
 /* opengl shader */
 

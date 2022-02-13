@@ -39,6 +39,8 @@ zms_ray_protocol_enter(void* data, struct zgn_ray* zgn_ray, uint32_t serial,
   zms_signal_add(&virtual_object->destroy_signal,
       &ray->focus_virtual_object_destroy_listener);
 
+  ray->enter_serial = serial;
+
   virtual_object->interface->ray_enter(
       virtual_object->user_data, serial, origin_vec, direction_vec);
 }
@@ -139,6 +141,14 @@ static const struct zgn_ray_listener ray_listener = {
     .frame = zms_ray_protocol_frame,
     .axis_discrete = zms_ray_protocol_axis_discrete,
 };
+
+ZMS_EXPORT void
+zms_ray_set_length(struct zms_backend* backend, float length)
+{
+  if (backend->ray)
+    zgn_ray_set_length(backend->ray->proxy, backend->ray->enter_serial,
+        wl_fixed_from_double(length));
+}
 
 ZMS_EXPORT struct zms_ray*
 zms_ray_create(struct zms_backend* backend)
