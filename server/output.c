@@ -16,15 +16,13 @@
 static void
 draw_background(struct zms_bgra* bg, struct zms_screen_size size)
 {
-  struct zms_bgra edo_murasaki = {0x99, 0x53, 0x74, 0xff};
-  struct zms_bgra ukon = {0x14, 0xbf, 0xfa, 0xff};
-  struct zms_bgra ukon_dark = {0x0a, 0x5f, 0x7d, 0xff};
+  struct zms_bgra light_blue = {0xff, 0xff, 0x00, 0xff};
 
   int i = 0;
   for (int y = 0; y < size.height; y++) {
     for (int x = 0; x < size.width; x++) {
       if (x < 2 || size.width - 2 <= x || y < 2 || size.height - 2 <= y) {
-        bg[i] = edo_murasaki;
+        bg[i] = light_blue;
       }
       i++;
     }
@@ -33,16 +31,16 @@ draw_background(struct zms_bgra* bg, struct zms_screen_size size)
   for (float t = 0; t < 2; t += 0.00001) {
     int x = (cos(M_PI * t * 7) * size.width + size.width) / 2;
     int y = (sin(M_PI * t * 11) * size.height + size.height) / 2;
-    bg[size.width * y + x] = ukon;
+    bg[size.width * y + x] = light_blue;
     if (x - 1 >= 0) {
-      bg[size.width * y + (x - 1)] = ukon_dark;
-      if (y - 1 >= 0) bg[size.width * (y - 1) + (x - 1)] = ukon_dark;
-      if (y + 1 < size.height) bg[size.width * (y + 1) + (x - 1)] = ukon_dark;
+      bg[size.width * y + (x - 1)] = light_blue;
+      if (y - 1 >= 0) bg[size.width * (y - 1) + (x - 1)] = light_blue;
+      if (y + 1 < size.height) bg[size.width * (y + 1) + (x - 1)] = light_blue;
     }
     if (x + 1 < size.width) {
-      bg[size.width * y + (x + 1)] = ukon_dark;
-      if (y - 1 >= 0) bg[size.width * (y - 1) + (x + 1)] = ukon_dark;
-      if (y + 1 < size.height) bg[size.width * (y + 1) + (x + 1)] = ukon_dark;
+      bg[size.width * y + (x + 1)] = light_blue;
+      if (y - 1 >= 0) bg[size.width * (y - 1) + (x + 1)] = light_blue;
+      if (y + 1 < size.height) bg[size.width * (y + 1) + (x + 1)] = light_blue;
     }
   }
 }
