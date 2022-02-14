@@ -64,7 +64,6 @@ zms_compositor_create(
   struct zms_wm_base* wm_base;
   struct zms_data_device_manager* data_device_manager;
   struct zms_seat* seat;
-  const char* socket;
 
   display = wl_display_create();
   if (display == NULL) {
@@ -91,8 +90,7 @@ zms_compositor_create(
     goto err_global;
   }
 
-  socket = wl_display_add_socket_auto(display);
-  if (socket == NULL) {
+  if (wl_display_add_socket(display, NULL) != 0) {
     zms_log("failed to create a display socket\n");
     goto err_global;
   }
