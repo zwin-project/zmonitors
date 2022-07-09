@@ -63,6 +63,12 @@ zms_keyboard_set_focus(
   }
 
   if (view) {
+    wl_list_remove(&view->priv->link);
+    wl_list_insert(
+        &view->priv->output->priv->layers[ZMS_OUTPUT_MAIN_LAYER_INDEX]
+             .view_list,
+        &view->priv->link);
+
     uint32_t serial = wl_display_next_serial(display);
     struct wl_array keys;  // TODO: set keys pressed
     wl_array_init(&keys);
