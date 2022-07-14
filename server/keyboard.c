@@ -65,6 +65,7 @@ zms_keyboard_set_focus(
   if (view) {
     uint32_t serial = wl_display_next_serial(display);
     struct wl_array keys;  // TODO: set keys pressed
+    zms_view_bring_to_front(view);
     wl_array_init(&keys);
     client = wl_resource_get_client(view->priv->surface->resource);
     keyboard_client = zms_keyboard_client_find(client, keyboard);

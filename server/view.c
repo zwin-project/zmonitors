@@ -1,5 +1,6 @@
 #include "view.h"
 
+#include <assert.h>
 #include <string.h>
 #include <zmonitors-server.h>
 
@@ -128,4 +129,24 @@ zms_view_get_local_coord(
   *vy = y - view->priv->origin[1];
 
   return true;
+}
+
+ZMS_EXPORT void
+zms_view_bring_to_front(struct zms_view* view /* nonnull */)
+{
+  pixman_region32_t damage;
+
+  assert(view->priv->surface->role == SURFACE_ROLE_XDG_TOPLEVEL);
+  assert(zms_view_is_mapped(view));
+
+  wl_list_remove(&view->priv->link);
+  wl_list_insert(
+      &view->priv->output->priv->layers[ZMS_OUTPUT_MAIN_LAYER_INDEX].view_list,
+      &view->priv->link);
+
+  pixman_region32_init_view_global(&damage, view);
+
+  zms_output_render(view->priv->output, &damage);
+
+  pixman_region32_fini(&damage);
 }

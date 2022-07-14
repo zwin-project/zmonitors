@@ -72,4 +72,6 @@ bool zms_view_contains(
 bool zms_view_get_local_coord(
     struct zms_view* view, float x, float y, float* vx, float* vy);
 
+void zms_view_bring_to_front(struct zms_view* view);
+
 #endif  //  ZMONITORS_SERVER_VIEW_H
