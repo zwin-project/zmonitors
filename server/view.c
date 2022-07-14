@@ -137,6 +137,7 @@ zms_view_bring_to_front(struct zms_view* view /* nonnull */)
   pixman_region32_t damage;
 
   assert(view->priv->surface->role == SURFACE_ROLE_XDG_TOPLEVEL);
+  assert(zms_view_is_mapped(view));
 
   wl_list_remove(&view->priv->link);
   wl_list_insert(
